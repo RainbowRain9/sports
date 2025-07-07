@@ -19,3 +19,20 @@ yarn-error.log*
 # Documentation files
 doc/
 *.docx
+
+# Configuration files with sensitive data
+sports-backend/config/config.local.js
+sports-backend/.travis.yml
+sports-backend/appveyor.yml
+
+# Package lock files
+package-lock.json
+sports-web/package-lock.json
+sports-backend/package-lock.json
+
+# Augment memory system
+.augment_memory/
+.augment_memory_config/
+
+# CI/CD files
+.github/
