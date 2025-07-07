@@ -16,4 +16,6 @@ yarn-error.log*
 *.sln
 *.sw*
 
-.doc
+# Documentation files
+doc/
+*.docx
