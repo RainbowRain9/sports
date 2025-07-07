@@ -9,11 +9,11 @@ exports.mysql = {
     // 端口号
     port: '3306',
     // 用户名
-    user: '',
+    user: 'root',
     // 密码
-    password: '',
+    password: 'root',
     // 数据库名
-    database: '',
+    database: 'sports',
     dateStrings: true,
   },
   // 是否加载到 app 上，默认开启

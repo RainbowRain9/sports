@@ -5,9 +5,15 @@ import Logger from '@/plugins/logger';
 import App from './App.vue';
 import router from './router';
 import store from './store';
+import { permissionDirective, roleDirective } from '@/utils/permission';
 
 Vue.use(ElementUI);
 Vue.use(Logger, { debug: false });
+
+// 注册权限指令
+Vue.directive('permission', permissionDirective);
+Vue.directive('role', roleDirective);
+
 Vue.config.productionTip = false;
 
 Vue.$log.info('vue-eslint launch...');

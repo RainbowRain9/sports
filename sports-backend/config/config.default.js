@@ -30,6 +30,12 @@ module.exports = appInfo => {
   //     port: 443,
   //   },
   // };
+  // JWT配置
+  config.jwt = {
+    secret: 'sports-management-system-jwt-secret-key-2025',
+    expiresIn: '2h'
+  };
+
   // add your user config here
   const userConfig = {
     // myAppName: 'egg',

@@ -2,8 +2,15 @@ import { demo } from './adapter';
 
 export const getPing = async () => await demo.get('./ping');
 
-// 登陆模块
+// 登陆模块（原有接口，保持兼容）
 export const postLogin = async data => await demo.post('/login', data);
+
+// 新的多角色认证API
+export const authLogin = async data => await demo.post('/api/auth/login', data);
+export const authLogout = async () => await demo.post('/api/auth/logout');
+export const authProfile = async () => await demo.get('/api/auth/profile');
+export const authVerify = async token => await demo.post('/api/auth/verify', { token });
+export const authCheckPermission = async permission => await demo.post('/api/auth/check-permission', { permission });
 
 // 项目管理模块
 export const getProjects = async params =>

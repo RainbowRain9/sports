@@ -5,9 +5,17 @@
  */
 module.exports = app => {
   const { router, controller } = app;
-  // 登陆模块
+
+  // 原有登陆模块（保持兼容）
   router.get('/', controller.login.index);
   router.post('/login', controller.login.login);
+
+  // 新的多角色认证API
+  router.post('/api/auth/login', controller.auth.login);
+  router.post('/api/auth/logout', controller.auth.logout);
+  router.get('/api/auth/profile', app.middleware.auth(), controller.auth.profile);
+  router.post('/api/auth/verify', controller.auth.verify);
+  router.post('/api/auth/check-permission', app.middleware.auth(), controller.auth.checkPermission);
 
   // 运动员管理
   router.get('/players', controller.player.index);
