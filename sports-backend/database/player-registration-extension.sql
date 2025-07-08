@@ -39,7 +39,7 @@ CREATE OR REPLACE VIEW `v_registration_stats` AS
 SELECT 
   s.schedule_id,
   s.schedule_name,
-  s.schedule_itemname,
+  s.schedule_itemid,
   s.schedule_date,
   s.registration_start_time,
   s.registration_end_time,

@@ -19,7 +19,7 @@ class RegistrationService extends Service {
       SELECT 
         c.schedule_id,
         c.schedule_itemid,
-        c.schedule_itemname,
+        c.schedule_itemid,
         c.schedule_name,
         c.schedule_date,
         c.schedule_starttime,
@@ -60,18 +60,28 @@ class RegistrationService extends Service {
     const { app } = this;
     
     try {
-      // 调用存储过程检查限制
-      const sql = 'CALL CheckRegistrationLimits(?, ?, @can_register, @error_message)';
-      await app.mysql.query(sql, [playerId, scheduleId]);
-      
-      // 获取结果
-      const result = await app.mysql.query('SELECT @can_register as can_register, @error_message as error_message');
-      const checkResult = result[0];
-      
-      return {
-        canRegister: checkResult.can_register === 1,
-        errorMessage: checkResult.error_message || ''
-      };
+      // 使用事务确保在同一个连接中执行
+      const conn = await app.mysql.beginTransaction();
+
+      try {
+        // 调用存储过程检查限制
+        const sql = 'CALL CheckRegistrationLimits(?, ?, @can_register, @error_message)';
+        await conn.query(sql, [playerId, scheduleId]);
+
+        // 获取结果
+        const result = await conn.query('SELECT @can_register as can_register, @error_message as error_message');
+        const checkResult = result[0];
+
+        await conn.commit();
+
+        return {
+          canRegister: checkResult.can_register === 1,
+          errorMessage: checkResult.error_message || ''
+        };
+      } catch (error) {
+        await conn.rollback();
+        throw error;
+      }
       
     } catch (error) {
       this.logger.error('检查报名限制失败:', error);
@@ -123,15 +133,48 @@ class RegistrationService extends Service {
       
     } catch (error) {
       this.logger.error('创建报名失败:', error);
-      
+
       // 检查是否是重复报名错误
       if (error.code === 'ER_DUP_ENTRY') {
-        return {
-          success: false,
-          message: '您已经报名了该项目'
-        };
+        // 检查现有记录的状态
+        const existingRecord = await app.mysql.get('registration', {
+          player_id: playerId,
+          schedule_id: scheduleId
+        });
+
+        if (existingRecord && existingRecord.registration_status === 3) {
+          // 如果是已取消的记录，更新为重新报名
+          const updateResult = await app.mysql.update('registration', {
+            registration_status: 1,
+            registration_time: new Date(),
+            confirmation_time: null,
+            cancel_time: null,
+            cancel_reason: null,
+            updated_at: new Date()
+          }, {
+            where: {
+              registration_id: existingRecord.registration_id
+            }
+          });
+
+          return {
+            success: true,
+            data: {
+              registrationId: existingRecord.registration_id,
+              player_id: playerId,
+              schedule_id: scheduleId,
+              registration_status: 1,
+              registration_time: new Date()
+            }
+          };
+        } else {
+          return {
+            success: false,
+            message: '您已经报名了该项目'
+          };
+        }
       }
-      
+
       return {
         success: false,
         message: '报名失败，请稍后重试'
@@ -159,7 +202,7 @@ class RegistrationService extends Service {
         r.admin_note,
         c.schedule_id,
         c.schedule_itemid,
-        c.schedule_itemname,
+        c.schedule_itemid,
         c.schedule_name,
         c.schedule_date,
         c.schedule_starttime,

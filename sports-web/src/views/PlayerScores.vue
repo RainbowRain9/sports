@@ -85,7 +85,7 @@
         <el-table-column prop="schedule_name" label="项目名称" width="200">
           <template slot-scope="scope">
             <strong>{{ scope.row.schedule_name }}</strong>
-            <div class="item-type">{{ scope.row.schedule_itemname }}</div>
+            <div class="item-type">{{ scope.row.schedule_itemid }}</div>
           </template>
         </el-table-column>
         
@@ -162,36 +162,66 @@
       width="600px"
     >
       <div v-if="selectedScore">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="项目名称" :span="2">
-            {{ selectedScore.schedule_name }}
-          </el-descriptions-item>
-          <el-descriptions-item label="项目类型">
-            {{ selectedScore.schedule_itemname }}
-          </el-descriptions-item>
-          <el-descriptions-item label="比赛成绩">
-            <el-tag :type="getScoreType(selectedScore.plog_score)" size="medium">
-              {{ selectedScore.plog_score }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="比赛日期">
-            {{ formatDate(selectedScore.schedule_date) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="比赛时间">
-            {{ selectedScore.schedule_starttime }} - {{ selectedScore.schedule_endtime }}
-          </el-descriptions-item>
-          <el-descriptions-item label="排名">
-            <el-tag 
-              :type="getRankingType(selectedScore.ranking)" 
-              size="small"
-            >
-              第 {{ selectedScore.ranking }} 名
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="裁判员">
-            {{ selectedScore.judge_name || '--' }}
-          </el-descriptions-item>
-        </el-descriptions>
+        <!-- 使用兼容的Element UI组件替代el-descriptions -->
+        <div class="score-details">
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <div class="detail-item">
+                <span class="detail-label">项目名称：</span>
+                <span class="detail-value">{{ selectedScore.schedule_name }}</span>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <div class="detail-item">
+                <span class="detail-label">项目类型：</span>
+                <span class="detail-value">{{ selectedScore.schedule_itemid }}</span>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="detail-item">
+                <span class="detail-label">比赛成绩：</span>
+                <el-tag :type="getScoreType(selectedScore.plog_score)" size="medium">
+                  {{ selectedScore.plog_score }}
+                </el-tag>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <div class="detail-item">
+                <span class="detail-label">比赛日期：</span>
+                <span class="detail-value">{{ formatDate(selectedScore.schedule_date) }}</span>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="detail-item">
+                <span class="detail-label">比赛时间：</span>
+                <span class="detail-value">{{ selectedScore.schedule_starttime }} - {{ selectedScore.schedule_endtime }}</span>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <div class="detail-item">
+                <span class="detail-label">排名：</span>
+                <el-tag
+                  :type="getRankingType(selectedScore.ranking)"
+                  size="small"
+                >
+                  第 {{ selectedScore.ranking }} 名
+                </el-tag>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="detail-item">
+                <span class="detail-label">裁判员：</span>
+                <span class="detail-value">{{ selectedScore.judge_name || '--' }}</span>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
         
         <div v-if="selectedScore.schedule_introduction" style="margin-top: 20px;">
           <h4>项目介绍</h4>
@@ -456,5 +486,32 @@ export default {
 .analysis-label {
   font-weight: bold;
   margin-right: 10px;
+}
+
+/* 成绩详情样式 */
+.score-details {
+  padding: 10px 0;
+}
+
+.detail-item {
+  margin-bottom: 15px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.detail-label {
+  font-weight: bold;
+  color: #606266;
+  display: inline-block;
+  min-width: 80px;
+}
+
+.detail-value {
+  color: #303133;
 }
 </style>

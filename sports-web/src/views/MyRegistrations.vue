@@ -304,9 +304,9 @@ export default {
         if (result.success) {
           this.$message.success('取消报名成功');
           this.cancelDialogVisible = false;
-          
+
           // 更新本地数据
-          const index = this.registrations.findIndex(r => 
+          const index = this.registrations.findIndex(r =>
             r.registration_id === this.selectedRegistration.registration_id
           );
           if (index !== -1) {
@@ -316,6 +316,9 @@ export default {
             this.registrations[index].cancel_reason = this.cancelForm.reason;
           }
           this.applyFilter();
+
+          // 发出全局事件通知其他页面刷新数据
+          this.$root.$emit('registration-updated');
         } else {
           this.$message.error(result.message || '取消报名失败');
         }

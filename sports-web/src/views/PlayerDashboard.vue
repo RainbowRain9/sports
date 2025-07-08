@@ -202,6 +202,19 @@ export default {
   },
   async mounted() {
     await this.loadData();
+
+    // 监听报名数据更新事件
+    this.$root.$on('registration-updated', this.handleRegistrationUpdate);
+  },
+
+  // 页面激活时刷新数据
+  async activated() {
+    await this.loadData();
+  },
+
+  beforeDestroy() {
+    // 移除事件监听
+    this.$root.$off('registration-updated', this.handleRegistrationUpdate);
   },
   methods: {
     async loadData() {
@@ -248,6 +261,11 @@ export default {
     
     goToScores() {
       this.$router.push('/player/scores');
+    },
+
+    // 处理报名数据更新事件
+    async handleRegistrationUpdate() {
+      await this.loadData();
     },
     
     viewScoreDetail(score) {

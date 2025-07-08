@@ -330,7 +330,7 @@ class PlayerService extends Service {
         p.plog_score,
         c.schedule_id,
         c.schedule_name,
-        c.schedule_itemname,
+        c.schedule_itemid,
         c.schedule_date,
         c.schedule_starttime,
         c.schedule_endtime,

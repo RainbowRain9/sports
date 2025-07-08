@@ -141,20 +141,25 @@
     >
       <div v-if="selectedEvent">
         <h4>{{ selectedEvent.schedule_name }}</h4>
-        <el-descriptions :column="1" border>
-          <el-descriptions-item label="比赛日期">
-            {{ formatDate(selectedEvent.schedule_date) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="比赛时间">
-            {{ selectedEvent.schedule_starttime }} - {{ selectedEvent.schedule_endtime }}
-          </el-descriptions-item>
-          <el-descriptions-item label="当前报名">
-            {{ selectedEvent.current_participants }}/{{ selectedEvent.max_participants }} 人
-          </el-descriptions-item>
-          <el-descriptions-item label="剩余名额">
-            {{ selectedEvent.available_slots }} 个
-          </el-descriptions-item>
-        </el-descriptions>
+        <!-- 使用兼容的Element UI组件替代el-descriptions -->
+        <div class="event-details">
+          <div class="detail-row">
+            <span class="detail-label">比赛日期：</span>
+            <span class="detail-value">{{ formatDate(selectedEvent.schedule_date) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">比赛时间：</span>
+            <span class="detail-value">{{ selectedEvent.schedule_starttime }} - {{ selectedEvent.schedule_endtime }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">当前报名：</span>
+            <span class="detail-value">{{ selectedEvent.current_participants }}/{{ selectedEvent.max_participants }} 人</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">剩余名额：</span>
+            <span class="detail-value">{{ selectedEvent.available_slots }} 个</span>
+          </div>
+        </div>
         
         <div class="confirm-note">
           <el-alert
@@ -215,6 +220,19 @@ export default {
   },
   async mounted() {
     await this.loadEvents();
+
+    // 监听报名数据更新事件
+    this.$root.$on('registration-updated', this.handleRegistrationUpdate);
+  },
+
+  // 页面激活时刷新数据
+  async activated() {
+    await this.loadEvents();
+  },
+
+  beforeDestroy() {
+    // 移除事件监听
+    this.$root.$off('registration-updated', this.handleRegistrationUpdate);
   },
   methods: {
     async loadEvents() {
@@ -245,8 +263,8 @@ export default {
       
       // 按项目类型筛选
       if (this.filterForm.itemType) {
-        filtered = filtered.filter(event => 
-          event.schedule_itemname.includes(this.filterForm.itemType)
+        filtered = filtered.filter(event =>
+          event.schedule_itemid.toString().includes(this.filterForm.itemType)
         );
       }
       
@@ -301,9 +319,9 @@ export default {
         if (result.success) {
           this.$message.success('报名成功！');
           this.confirmDialogVisible = false;
-          
+
           // 更新事件状态
-          const eventIndex = this.events.findIndex(e => 
+          const eventIndex = this.events.findIndex(e =>
             e.schedule_id === this.selectedEvent.schedule_id
           );
           if (eventIndex !== -1) {
@@ -312,6 +330,9 @@ export default {
             this.events[eventIndex].available_slots -= 1;
           }
           this.applyFilter();
+
+          // 发出全局事件通知其他页面刷新数据
+          this.$root.$emit('registration-updated');
         } else {
           this.$message.error(result.message || '报名失败');
         }
@@ -345,6 +366,11 @@ export default {
       if (event.available_slots <= 0) return '名额已满';
       if (event.available_slots <= 5) return '名额紧张';
       return '可报名';
+    },
+
+    // 处理报名数据更新事件
+    async handleRegistrationUpdate() {
+      await this.loadEvents();
     }
   }
 };
@@ -470,5 +496,40 @@ export default {
 .confirm-note li {
   margin-bottom: 5px;
   color: #606266;
+}
+
+/* 事件详情样式 */
+.event-details {
+  margin: 15px 0;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.detail-row {
+  display: flex;
+  padding: 12px 15px;
+  border-bottom: 1px solid #ebeef5;
+  background-color: #fafafa;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row:nth-child(even) {
+  background-color: #fff;
+}
+
+.detail-label {
+  font-weight: bold;
+  color: #606266;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #303133;
+  flex: 1;
 }
 </style>
