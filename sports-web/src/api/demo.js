@@ -12,6 +12,20 @@ export const authProfile = async () => await demo.get('/api/auth/profile');
 export const authVerify = async token => await demo.post('/api/auth/verify', { token });
 export const authCheckPermission = async permission => await demo.post('/api/auth/check-permission', { permission });
 
+// 运动员自助系统API
+export const getPlayerProfile = async () => await demo.get('/api/player/profile');
+export const updatePlayerProfile = async data => await demo.put('/api/player/profile', data);
+export const getPlayerStats = async () => await demo.get('/api/player/stats');
+export const changePlayerPassword = async data => await demo.put('/api/player/password', data);
+export const getPlayerScores = async params => await demo.get('/api/player/scores', { params });
+
+// 报名管理API
+export const getAvailableEvents = async () => await demo.get('/api/registration/available-events');
+export const createRegistration = async data => await demo.post('/api/registration/register', data);
+export const getMyRegistrations = async params => await demo.get('/api/registration/my-registrations', { params });
+export const cancelRegistration = async registrationId => await demo.delete(`/api/registration/${registrationId}`);
+export const checkRegistrationLimits = async data => await demo.post('/api/registration/check-limits', data);
+
 // 项目管理模块
 export const getProjects = async params =>
   await demo.get('/projects', { params });

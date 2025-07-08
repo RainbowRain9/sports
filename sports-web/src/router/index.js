@@ -55,6 +55,45 @@ const router = new Router({
           meta: { requiresAuth: true, roles: ['admin', 'operator', 'judge'] }
         }
       ]
+    },
+    // 运动员专用路由
+    {
+      path: '/player',
+      name: 'player-layout',
+      component: () => import('../views/PlayerLayout.vue'),
+      meta: { requiresAuth: true, roles: ['player'] },
+      children: [
+        {
+          path: '/player-home',
+          name: 'player-home',
+          component: () => import('../views/PlayerDashboard.vue'),
+          meta: { requiresAuth: true, roles: ['player'] }
+        },
+        {
+          path: '/player/profile',
+          name: 'player-profile',
+          component: () => import('../views/PlayerProfile.vue'),
+          meta: { requiresAuth: true, roles: ['player'] }
+        },
+        {
+          path: '/player/registration',
+          name: 'player-registration',
+          component: () => import('../views/AvailableEvents.vue'),
+          meta: { requiresAuth: true, roles: ['player'] }
+        },
+        {
+          path: '/player/my-registrations',
+          name: 'player-my-registrations',
+          component: () => import('../views/MyRegistrations.vue'),
+          meta: { requiresAuth: true, roles: ['player'] }
+        },
+        {
+          path: '/player/scores',
+          name: 'player-scores',
+          component: () => import('../views/PlayerScores.vue'),
+          meta: { requiresAuth: true, roles: ['player'] }
+        }
+      ]
     }
   ]
 });

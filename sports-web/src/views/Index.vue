@@ -2,14 +2,16 @@
   <el-container>
     <el-header class="header">
       <span class="header-title">体育赛事管理系统</span>
-      <span class="header-name">{{$store.state.userName}}</span>
+      <span class="header-name">{{ displayUserName }}</span>
       <span class="header-logout"
             @click="logout">退出</span>
     </el-header>
     <el-container class="container">
       <el-aside width="140px"
                 class="container-aside">
-        <el-menu default-active="/project"
+        <!-- 管理员/操作员菜单 -->
+        <el-menu v-if="isAdminOrOperator"
+                 :default-active="defaultActive"
                  @open="handleOpen"
                  router
                  @close="handleClose">
@@ -30,6 +32,34 @@
             <span slot="title">操作员管理</span>
           </el-menu-item>
         </el-menu>
+
+        <!-- 运动员菜单 -->
+        <el-menu v-if="isPlayer"
+                 :default-active="defaultActive"
+                 @open="handleOpen"
+                 router
+                 @close="handleClose">
+          <el-menu-item index="/player-home">
+            <i class="el-icon-s-home"></i>
+            <span slot="title">个人中心</span>
+          </el-menu-item>
+          <el-menu-item index="/player/profile">
+            <i class="el-icon-user"></i>
+            <span slot="title">个人信息</span>
+          </el-menu-item>
+          <el-menu-item index="/player/registration">
+            <i class="el-icon-plus"></i>
+            <span slot="title">项目报名</span>
+          </el-menu-item>
+          <el-menu-item index="/player/my-registrations">
+            <i class="el-icon-tickets"></i>
+            <span slot="title">我的报名</span>
+          </el-menu-item>
+          <el-menu-item index="/player/scores">
+            <i class="el-icon-trophy"></i>
+            <span slot="title">我的成绩</span>
+          </el-menu-item>
+        </el-menu>
       </el-aside>
       <el-main>
         <router-view></router-view>
@@ -40,17 +70,54 @@
 </template>
 
 <script>
+import { permissionMixin } from '@/utils/permission';
+
 export default {
+  mixins: [permissionMixin],
   data: () => ({
 
   }),
   computed: {
     adminType() {
       return this.$store.state.adminType;
+    },
+
+    // 判断是否是管理员或操作员
+    isAdminOrOperator() {
+      return this.$isAdmin() || this.$isOperator();
+    },
+
+    // 判断是否是运动员
+    isPlayer() {
+      return this.$isPlayer();
+    },
+
+    // 判断是否是裁判员
+    isJudge() {
+      return this.$isJudge();
+    },
+
+    // 根据用户角色设置默认激活菜单
+    defaultActive() {
+      if (this.isPlayer) {
+        return '/player-home';
+      }
+      return '/project';
+    },
+
+    // 显示用户名
+    displayUserName() {
+      // 优先使用新的认证系统用户名
+      if (this.$store.getters['auth/userName']) {
+        return this.$store.getters['auth/userName'];
+      }
+      // 兼容旧系统
+      return this.$store.state.userName || '用户';
     }
   },
   created() {
-    if (this.$store.state.userName === '') {
+    // 检查用户是否已登录
+    if (!this.$store.getters['auth/isLoggedIn'] && this.$store.state.userName === '') {
       this.$router.push('/');
     }
   },
@@ -61,8 +128,23 @@ export default {
     handleClose() {
 
     },
-    logout() {
-      this.$router.push('/');
+    async logout() {
+      try {
+        // 如果使用新的认证系统
+        if (this.$store.getters['auth/isLoggedIn']) {
+          await this.$store.dispatch('auth/logout');
+        } else {
+          // 兼容旧系统
+          this.$store.commit('SET_USER_NAME', '');
+          this.$store.commit('SET_ADMIN_TYPE', '');
+        }
+
+        this.$message.success('退出成功');
+        this.$router.push('/');
+      } catch (error) {
+        console.error('退出失败:', error);
+        this.$message.error('退出失败，请稍后重试');
+      }
     }
   }
 };

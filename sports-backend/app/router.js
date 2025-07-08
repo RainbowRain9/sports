@@ -17,6 +17,20 @@ module.exports = app => {
   router.post('/api/auth/verify', controller.auth.verify);
   router.post('/api/auth/check-permission', app.middleware.auth(), controller.auth.checkPermission);
 
+  // 运动员自助系统API
+  router.get('/api/player/profile', app.middleware.auth(), controller.player.getProfile);
+  router.put('/api/player/profile', app.middleware.auth(), controller.player.updateProfile);
+  router.get('/api/player/stats', app.middleware.auth(), controller.player.getStats);
+  router.put('/api/player/password', app.middleware.auth(), controller.player.changePassword);
+  router.get('/api/player/scores', app.middleware.auth(), controller.player.getPlayerScores);
+
+  // 报名管理API
+  router.get('/api/registration/available-events', app.middleware.auth(), controller.registration.getAvailableEvents);
+  router.post('/api/registration/register', app.middleware.auth(), controller.registration.createRegistration);
+  router.get('/api/registration/my-registrations', app.middleware.auth(), controller.registration.getMyRegistrations);
+  router.delete('/api/registration/:registrationId', app.middleware.auth(), controller.registration.cancelRegistration);
+  router.post('/api/registration/check-limits', app.middleware.auth(), controller.registration.checkLimits);
+
   // 运动员管理
   router.get('/players', controller.player.index);
   router.post('/players', controller.player.create);
