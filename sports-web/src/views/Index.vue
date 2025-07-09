@@ -21,11 +21,17 @@
             <span slot="title">数据统计</span>
           </el-menu-item>
 
-          <!-- 报名管理 - 暂时禁用 -->
-          <!-- <el-menu-item index="/registration-review">
+          <!-- 统计中心 -->
+          <el-menu-item index="/statistics-center" v-if="adminType === '2'">
+            <i class="el-icon-pie-chart"></i>
+            <span slot="title">统计中心</span>
+          </el-menu-item>
+
+          <!-- 报名管理 -->
+          <el-menu-item index="/registration-review">
             <i class="el-icon-s-check"></i>
             <span slot="title">报名审核</span>
-          </el-menu-item> -->
+          </el-menu-item>
 
           <!-- 基础管理 -->
           <el-menu-item index="/project">

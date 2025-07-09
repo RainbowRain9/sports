@@ -7,17 +7,28 @@
           <i class="el-icon-document-checked"></i>
           报名审核管理
         </h2>
-        <p class="page-description">管理和审核运动员报名申请</p>
+        <p class="page-description">
+          管理和审核运动员报名申请
+          <span v-if="lastUpdateTime" class="last-update">
+            · 最后更新：{{ lastUpdateTime }}
+          </span>
+        </p>
       </div>
       <div class="header-actions">
-        <el-button 
-          type="primary" 
-          icon="el-icon-refresh" 
+        <el-button
+          type="primary"
+          icon="el-icon-refresh"
           @click="refreshData"
           :loading="loading"
         >
           刷新数据
         </el-button>
+        <el-switch
+          v-model="autoRefresh"
+          active-text="自动刷新"
+          @change="toggleAutoRefresh"
+          style="margin-left: 10px;">
+        </el-switch>
         <el-button 
           type="success" 
           icon="el-icon-download" 
@@ -78,8 +89,11 @@
       </el-row>
     </div>
 
-    <!-- 筛选条件 -->
-    <el-card class="filter-card">
+    <!-- 标签页 -->
+    <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+      <el-tab-pane label="待审核报名" name="pending">
+        <!-- 筛选条件 -->
+        <el-card class="filter-card">
       <div class="filter-form">
         <el-form :model="filterForm" inline>
           <el-form-item label="报名状态">
@@ -247,6 +261,61 @@
         ></el-pagination>
       </div>
     </el-card>
+      </el-tab-pane>
+
+      <!-- 审核历史标签页 -->
+      <el-tab-pane label="审核历史" name="history">
+        <el-card class="table-card">
+          <el-table
+            :data="historyData"
+            v-loading="historyLoading"
+            style="width: 100%"
+          >
+            <el-table-column prop="player_name" label="运动员" width="100"></el-table-column>
+            <el-table-column prop="player_class" label="班级" width="120"></el-table-column>
+            <el-table-column prop="schedule_name" label="比赛项目" width="120"></el-table-column>
+            <el-table-column prop="schedule_date" label="比赛日期" width="100"></el-table-column>
+            <el-table-column prop="registration_time" label="报名时间" width="150">
+              <template slot-scope="scope">
+                {{ formatDateTime(scope.row.registration_time) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="confirmation_time" label="审核时间" width="150">
+              <template slot-scope="scope">
+                {{ formatDateTime(scope.row.confirmation_time) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="reviewer_name" label="审核人" width="100"></el-table-column>
+            <el-table-column prop="registration_status" label="审核结果" width="100">
+              <template slot-scope="scope">
+                <el-tag :type="getStatusType(scope.row.registration_status)">
+                  {{ scope.row.status_text }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="admin_note" label="审核备注" min-width="150">
+              <template slot-scope="scope">
+                <span v-if="scope.row.admin_note">{{ scope.row.admin_note }}</span>
+                <span v-else class="text-muted">暂无备注</span>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 历史记录分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              @size-change="handleHistorySizeChange"
+              @current-change="handleHistoryCurrentChange"
+              :current-page="historyPagination.page"
+              :page-sizes="[10, 20, 50, 100]"
+              :page-size="historyPagination.pageSize"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="historyPagination.total"
+            ></el-pagination>
+          </div>
+        </el-card>
+      </el-tab-pane>
+    </el-tabs>
 
     <!-- 审核对话框 -->
     <el-dialog
@@ -257,10 +326,10 @@
     >
       <el-form :model="reviewForm" label-width="80px">
         <el-form-item label="运动员">
-          <span>{{ reviewDialog.registration?.player_name }}</span>
+          <span>{{ reviewDialog.registration && reviewDialog.registration.player_name }}</span>
         </el-form-item>
         <el-form-item label="比赛项目">
-          <span>{{ reviewDialog.registration?.schedule_name }}</span>
+          <span>{{ reviewDialog.registration && reviewDialog.registration.schedule_name }}</span>
         </el-form-item>
         <el-form-item label="审核结果">
           <el-tag 
@@ -354,7 +423,8 @@ import {
   batchReviewRegistrations,
   reviewRegistration,
   getRegistrationStats,
-  exportRegistrations
+  exportRegistrations,
+  getReviewHistory
 } from '@/api/demo.js';
 
 export default {
@@ -363,6 +433,10 @@ export default {
     return {
       loading: false,
       batchLoading: false,
+      autoRefresh: false,
+      refreshTimer: null,
+      lastUpdateTime: '',
+      activeTab: 'pending',
 
       // 统计数据
       stats: {
@@ -396,6 +470,24 @@ export default {
       // 操作加载状态
       actionLoading: {},
 
+      // 审核历史数据
+      historyData: [],
+      historyLoading: false,
+      historyPagination: {
+        page: 1,
+        pageSize: 20,
+        total: 0
+      },
+
+      // 审核历史数据
+      historyData: [],
+      historyLoading: false,
+      historyPagination: {
+        page: 1,
+        pageSize: 20,
+        total: 0
+      },
+
       // 审核对话框
       reviewDialog: {
         visible: false,
@@ -424,6 +516,14 @@ export default {
     await this.loadEventOptions();
   },
 
+  beforeDestroy() {
+    // 清理定时器
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  },
+
   methods: {
     // 加载数据
     async loadData() {
@@ -439,12 +539,18 @@ export default {
         if (result.success) {
           this.tableData = result.data.list;
           this.pagination.total = result.data.total;
+          this.lastUpdateTime = new Date().toLocaleTimeString();
         } else {
           this.$message.error(result.message || '获取数据失败');
         }
       } catch (error) {
         console.error('加载数据失败:', error);
-        this.$message.error('加载数据失败，请稍后重试');
+        if (error.response && error.response.status === 401) {
+          this.$message.error('登录已过期，请重新登录');
+          this.$router.push('/login');
+        } else {
+          this.$message.error('加载数据失败，请稍后重试');
+        }
       } finally {
         this.loading = false;
       }
@@ -459,6 +565,12 @@ export default {
         }
       } catch (error) {
         console.error('加载统计数据失败:', error);
+        if (error.response && error.response.status === 401) {
+          this.$message.error('登录已过期，请重新登录');
+          this.$router.push('/login');
+        } else {
+          this.$message.error('加载统计数据失败');
+        }
       }
     },
 
@@ -478,6 +590,71 @@ export default {
       await this.loadData();
       await this.loadStats();
       this.$message.success('数据已刷新');
+    },
+
+    // 处理标签页切换
+    handleTabClick(tab) {
+      if (tab.name === 'history' && this.historyData.length === 0) {
+        this.loadHistoryData();
+      }
+    },
+
+    // 加载审核历史数据
+    async loadHistoryData() {
+      this.historyLoading = true;
+      try {
+        const params = {
+          page: this.historyPagination.page,
+          pageSize: this.historyPagination.pageSize
+        };
+
+        const result = await getReviewHistory(params);
+        if (result.success) {
+          this.historyData = result.data.list;
+          this.historyPagination.total = result.data.total;
+        } else {
+          this.$message.error(result.message || '获取审核历史失败');
+        }
+      } catch (error) {
+        console.error('加载审核历史失败:', error);
+        if (error.response && error.response.status === 401) {
+          this.$message.error('登录已过期，请重新登录');
+          this.$router.push('/login');
+        } else {
+          this.$message.error('加载审核历史失败，请稍后重试');
+        }
+      } finally {
+        this.historyLoading = false;
+      }
+    },
+
+    // 历史记录分页处理
+    handleHistorySizeChange(val) {
+      this.historyPagination.pageSize = val;
+      this.historyPagination.page = 1;
+      this.loadHistoryData();
+    },
+
+    handleHistoryCurrentChange(val) {
+      this.historyPagination.page = val;
+      this.loadHistoryData();
+    },
+
+    // 切换自动刷新
+    toggleAutoRefresh(enabled) {
+      if (enabled) {
+        this.refreshTimer = setInterval(() => {
+          this.loadData();
+          this.loadStats();
+        }, 30000); // 30秒刷新一次
+        this.$message.success('已开启自动刷新（30秒间隔）');
+      } else {
+        if (this.refreshTimer) {
+          clearInterval(this.refreshTimer);
+          this.refreshTimer = null;
+        }
+        this.$message.info('已关闭自动刷新');
+      }
     },
 
     // 应用筛选
@@ -504,7 +681,9 @@ export default {
 
     // 清除选择
     clearSelection() {
-      this.$refs.table?.clearSelection();
+      if (this.$refs.table) {
+        this.$refs.table.clearSelection();
+      }
       this.selectedRows = [];
     },
 
@@ -763,6 +942,12 @@ export default {
 .header-content p {
   margin: 5px 0 0 0;
   opacity: 0.9;
+}
+
+.last-update {
+  color: #999;
+  font-size: 12px;
+  font-weight: normal;
 }
 
 .header-actions .el-button {

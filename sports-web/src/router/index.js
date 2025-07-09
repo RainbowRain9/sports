@@ -48,12 +48,12 @@ const router = new Router({
           component: () => import('../views/Admin.vue'),
           meta: { requiresAuth: true, roles: ['admin'] }
         },
-        // {
-        //   path: '/registration-review',
-        //   name: 'registration-review',
-        //   component: () => import('../views/RegistrationReview.vue'),
-        //   meta: { requiresAuth: true, roles: ['admin', 'operator'] }
-        // },
+        {
+          path: '/registration-review',
+          name: 'registration-review',
+          component: () => import('../views/RegistrationReview.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'operator'] }
+        },
         {
           path: '/system-config',
           name: 'system-config',
@@ -77,6 +77,12 @@ const router = new Router({
           name: 'admin-dashboard',
           component: () => import('../views/AdminDashboard.vue'),
           meta: { requiresAuth: true, roles: ['admin', 'operator'] }
+        },
+        {
+          path: '/statistics-center',
+          name: 'statistics-center',
+          component: () => import('../views/StatisticsCenter.vue'),
+          meta: { requiresAuth: true, roles: ['admin'] }
         },
         {
           path: '/judge-management',

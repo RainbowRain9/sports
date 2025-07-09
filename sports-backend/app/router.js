@@ -130,4 +130,14 @@ module.exports = app => {
   router.delete('/plogs/:id', controller.plog.destory);
 
   router.get('/test', controller.competition.weather);
+
+  // 数据统计中心API
+  router.get('/api/statistics/overview', app.middleware.auth(), controller.statistics.getOverview);
+  router.get('/api/statistics/class-participation', app.middleware.auth(), controller.statistics.getClassParticipation);
+  router.get('/api/statistics/event-popularity', app.middleware.auth(), controller.statistics.getEventPopularity);
+  router.get('/api/statistics/gender-distribution', app.middleware.auth(), controller.statistics.getGenderDistribution);
+  router.get('/api/statistics/registration-trend', app.middleware.auth(), controller.statistics.getRegistrationTrend);
+  router.get('/api/statistics/score-analysis', app.middleware.auth(), controller.statistics.getScoreAnalysis);
+  router.get('/api/statistics/system-status', app.middleware.auth(), controller.statistics.getSystemStatus);
+  router.get('/api/statistics/dashboard', app.middleware.auth(), controller.statistics.getDashboard);
 };
