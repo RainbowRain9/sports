@@ -216,6 +216,57 @@
         </el-button>
       </div>
     </el-dialog>
+
+    <!-- 赛事分配对话框 -->
+    <el-dialog
+      title="分配赛事"
+      :visible.sync="assignDialog.visible"
+      width="500px"
+      @close="resetAssignDialog"
+    >
+      <el-form :model="assignForm" label-width="100px">
+        <el-form-item label="裁判员">
+          <el-input v-model="assignDialog.judgeName" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="比赛项目" required>
+          <el-select
+            v-model="assignForm.schedule_id"
+            placeholder="请选择比赛项目"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="event in availableEvents"
+              :key="event.schedule_id"
+              :label="`${event.schedule_name} (${event.schedule_date})`"
+              :value="event.schedule_id"
+            >
+              <span style="float: left">{{ event.schedule_name }}</span>
+              <span style="float: right; color: #8492a6; font-size: 13px">
+                {{ event.schedule_date }}
+              </span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="assignForm.notes"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入分配备注（可选）"
+          ></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="assignDialog.visible = false">取消</el-button>
+        <el-button
+          type="primary"
+          @click="confirmAssignEvent"
+          :loading="assignDialog.loading"
+        >
+          确定分配
+        </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -252,6 +303,18 @@ export default {
         judge_level: '',
         judge_bio: ''
       },
+      // 赛事分配相关数据
+      assignDialog: {
+        visible: false,
+        loading: false,
+        judgeId: null,
+        judgeName: ''
+      },
+      assignForm: {
+        schedule_id: '',
+        notes: ''
+      },
+      availableEvents: [],
       judgeRules: {
         judge_name: [
           { required: true, message: '请输入姓名', trigger: 'blur' }
@@ -349,50 +412,82 @@ export default {
       try {
         // 获取可分配的比赛项目
         const eventsResponse = await this.$api.getAdminAvailableEvents();
-        if (!eventsResponse.data.success) {
+        if (!eventsResponse.success) {
           this.$message.error('获取比赛项目失败');
           return;
         }
 
-        const events = eventsResponse.data.data;
-        if (events.length === 0) {
+        this.availableEvents = eventsResponse.data;
+        if (this.availableEvents.length === 0) {
           this.$message.info('暂无可分配的比赛项目');
           return;
         }
 
-        // 显示分配对话框
-        this.$prompt('请选择要分配的比赛项目', '赛事分配', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          inputType: 'select',
-          inputOptions: events.reduce((options, event) => {
-            options[event.schedule_id] = `${event.schedule_name} (${event.schedule_date})`;
-            return options;
-          }, {}),
-          inputValidator: (value) => {
-            if (!value) {
-              return '请选择比赛项目';
-            }
-            return true;
-          }
-        }).then(async ({ value }) => {
-          const assignResponse = await this.$api.assignJudgeToEvent({
-            judge_id: row.judge_id,
-            schedule_id: parseInt(value),
-            notes: `管理员分配给${row.judge_name}`
-          });
-
-          if (assignResponse.data.success) {
-            this.$message.success(assignResponse.data.message);
-          } else {
-            this.$message.error(assignResponse.data.message || '分配失败');
-          }
-        });
-
+        // 设置分配对话框数据
+        this.assignDialog.judgeId = row.judge_id;
+        this.assignDialog.judgeName = row.judge_name;
+        this.assignDialog.visible = true;
+        this.resetAssignForm();
       } catch (error) {
         console.error('分配赛事失败:', error);
         this.$message.error('分配失败，请稍后重试');
       }
+    },
+
+    // 确认分配赛事
+    async confirmAssignEvent() {
+      if (!this.assignForm.schedule_id) {
+        this.$message.error('请选择比赛项目');
+        return;
+      }
+
+      this.assignDialog.loading = true;
+      try {
+        const requestData = {
+          judge_id: this.assignDialog.judgeId,
+          schedule_id: parseInt(this.assignForm.schedule_id),
+          notes: this.assignForm.notes || `管理员分配给${this.assignDialog.judgeName}`
+        };
+
+        console.log('分配赛事请求数据:', requestData);
+
+        const assignResponse = await this.$api.assignJudgeToEvent(requestData);
+        console.log('分配赛事响应数据:', assignResponse);
+
+        if (assignResponse.success) {
+          this.$message.success(assignResponse.message || '分配成功');
+          this.assignDialog.visible = false;
+          await this.loadJudges(); // 刷新列表
+        } else {
+          this.$message.error(assignResponse.message || '分配失败');
+        }
+      } catch (error) {
+        console.error('分配赛事失败:', error);
+
+        // 处理HTTP错误响应
+        if (error.response && error.response.data && error.response.data.message) {
+          this.$message.error(error.response.data.message);
+        } else {
+          this.$message.error('分配失败，请稍后重试');
+        }
+      } finally {
+        this.assignDialog.loading = false;
+      }
+    },
+
+    // 重置分配表单
+    resetAssignForm() {
+      this.assignForm = {
+        schedule_id: '',
+        notes: ''
+      };
+    },
+
+    // 重置分配对话框
+    resetAssignDialog() {
+      this.resetAssignForm();
+      this.assignDialog.judgeId = null;
+      this.assignDialog.judgeName = '';
     },
 
     // 删除裁判员
@@ -404,11 +499,11 @@ export default {
       }).then(async () => {
         try {
           const response = await this.$api.deleteAdminJudge(row.judge_id);
-          if (response.data.success) {
-            this.$message.success(response.data.message);
+          if (response.success) {
+            this.$message.success(response.message);
             await this.loadJudges();
           } else {
-            this.$message.error(response.data.message || '删除失败');
+            this.$message.error(response.message || '删除失败');
           }
         } catch (error) {
           console.error('删除裁判员失败:', error);
@@ -423,11 +518,11 @@ export default {
         const newStatus = row.judge_status === 1 ? 0 : 1;
         const response = await this.$api.toggleJudgeStatus(row.judge_id, { status: newStatus });
 
-        if (response.data.success) {
-          this.$message.success(response.data.message);
+        if (response.success) {
+          this.$message.success(response.message);
           row.judge_status = newStatus;
         } else {
-          this.$message.error(response.data.message || '操作失败');
+          this.$message.error(response.message || '操作失败');
         }
       } catch (error) {
         console.error('切换状态失败:', error);
@@ -450,12 +545,12 @@ export default {
           response = await this.$api.createAdminJudge(this.judgeForm);
         }
 
-        if (response.data.success) {
-          this.$message.success(response.data.message);
+        if (response.success) {
+          this.$message.success(response.message);
           this.judgeDialog.visible = false;
           await this.loadJudges();
         } else {
-          this.$message.error(response.data.message || '操作失败');
+          this.$message.error(response.message || '操作失败');
         }
       } catch (error) {
         if (error !== 'validation') {

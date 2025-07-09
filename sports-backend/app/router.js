@@ -69,6 +69,12 @@ module.exports = app => {
   router.get('/api/admin/operation-logs/targets', app.middleware.auth(), controller.operationLog.getTargetTypes);
 
   // 管理员端裁判员管理API（临时移除认证，用于测试）
+  // 注意：具体路径必须放在参数路径之前，避免路由匹配冲突
+  router.get('/api/admin/judges/available-events', controller.judgeAdmin.getAvailableEvents);
+  router.get('/api/admin/judges/work-stats', controller.judgeAdmin.getJudgeWorkStats);
+  router.post('/api/admin/judges/assign-event', controller.judgeAdmin.assignJudgeToEvent);
+  router.post('/api/admin/judges/batch-assign', controller.judgeAdmin.batchAssignJudges);
+
   router.get('/api/admin/judges', controller.judgeAdmin.getJudgeList);
   router.get('/api/admin/judges/:judgeId', controller.judgeAdmin.getJudgeDetail);
   router.post('/api/admin/judges', controller.judgeAdmin.createJudge);
@@ -77,12 +83,8 @@ module.exports = app => {
   router.put('/api/admin/judges/:judgeId/status', controller.judgeAdmin.toggleJudgeStatus);
 
   // 管理员端裁判员赛事分配API（临时移除认证，用于测试）
-  router.get('/api/admin/judges/available-events', controller.judgeAdmin.getAvailableEvents);
   router.get('/api/admin/judges/:judgeId/assignments', controller.judgeAdmin.getJudgeAssignments);
-  router.post('/api/admin/judges/assign-event', controller.judgeAdmin.assignJudgeToEvent);
   router.delete('/api/admin/judges/assignments/:assignmentId', controller.judgeAdmin.cancelJudgeAssignment);
-  router.post('/api/admin/judges/batch-assign', controller.judgeAdmin.batchAssignJudges);
-  router.get('/api/admin/judges/work-stats', controller.judgeAdmin.getJudgeWorkStats);
 
   // 裁判员专用API
   router.get('/api/judge/profile', app.middleware.auth(), controller.judge.getProfile);
