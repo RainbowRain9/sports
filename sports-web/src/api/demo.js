@@ -62,6 +62,22 @@ export const getUserOperationHistory = async (userId, params) => await demo.get(
 export const getOperationTypes = async () => await demo.get('/api/admin/operation-logs/operations');
 export const getTargetTypes = async () => await demo.get('/api/admin/operation-logs/targets');
 
+// 管理员端裁判员管理API
+export const getAdminJudgeList = async params => await demo.get('/api/admin/judges', { params });
+export const getAdminJudgeDetail = async judgeId => await demo.get(`/api/admin/judges/${judgeId}`);
+export const createAdminJudge = async data => await demo.post('/api/admin/judges', data);
+export const updateAdminJudge = async (judgeId, data) => await demo.put(`/api/admin/judges/${judgeId}`, data);
+export const deleteAdminJudge = async judgeId => await demo.delete(`/api/admin/judges/${judgeId}`);
+export const toggleJudgeStatus = async (judgeId, data) => await demo.put(`/api/admin/judges/${judgeId}/status`, data);
+
+// 管理员端裁判员赛事分配API
+export const getAdminAvailableEvents = async () => await demo.get('/api/admin/judges/available-events');
+export const getJudgeAssignments = async judgeId => await demo.get(`/api/admin/judges/${judgeId}/assignments`);
+export const assignJudgeToEvent = async data => await demo.post('/api/admin/judges/assign-event', data);
+export const cancelJudgeAssignment = async assignmentId => await demo.delete(`/api/admin/judges/assignments/${assignmentId}`);
+export const batchAssignJudges = async data => await demo.post('/api/admin/judges/batch-assign', data);
+export const getJudgeWorkStats = async params => await demo.get('/api/admin/judges/work-stats', { params });
+
 // 裁判员专用API
 export const getJudgeProfile = async () => await demo.get('/api/judge/profile');
 export const updateJudgeProfile = async data => await demo.put('/api/judge/profile', data);

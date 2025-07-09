@@ -47,7 +47,7 @@
             <span slot="title">运动员管理</span>
           </el-menu-item>
           <el-menu-item index="/judge-management"
-                        v-if="adminType === '2'">
+                        v-if="adminType === '2' || adminType === '1'">
             <i class="el-icon-user-solid"></i>
             <span slot="title">裁判员管理</span>
           </el-menu-item>
@@ -143,7 +143,7 @@ export default {
   }),
   computed: {
     adminType() {
-      return this.$store.state.adminType;
+      return this.$store.getters['auth/roleSubType'];
     },
 
     // 判断是否是管理员或操作员

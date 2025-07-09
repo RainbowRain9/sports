@@ -15,6 +15,10 @@ Vue.prototype.$echarts = echarts;
 import { demo as httpClient } from '@/api/adapter';
 Vue.prototype.$http = httpClient;
 
+// 引入API方法
+import * as api from '@/api/demo';
+Vue.prototype.$api = api;
+
 Vue.use(ElementUI);
 Vue.use(Logger, { debug: false });
 

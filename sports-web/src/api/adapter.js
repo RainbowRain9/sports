@@ -33,12 +33,10 @@ const getInstance = (baseURL) => {
     (response = {}) => {
       const { data } = response;
 
-      // 新API格式（/api/auth/*）
+      // 新API格式（/api/auth/*、/api/admin/*）
       if (data.success !== undefined) {
-        if (data.success) {
-          return data;
-        }
-        return Promise.reject(data);
+        // 直接返回数据，保持前端代码的一致性
+        return data;
       }
 
       // 原有API格式（兼容）

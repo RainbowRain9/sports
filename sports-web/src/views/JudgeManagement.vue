@@ -285,32 +285,22 @@ export default {
     async loadJudges() {
       this.loading = true;
       try {
-        // 模拟数据 - 后续集成真实API
-        this.judgeList = [
-          {
-            judge_id: 1,
-            judge_name: '张裁判',
-            judge_username: 'judge001',
-            judge_sex: '男',
-            judge_phone: '13800138001',
-            judge_email: 'judge001@example.com',
-            judge_specialty: 'track_field',
-            judge_level: 'national',
-            judge_status: 1
-          },
-          {
-            judge_id: 2,
-            judge_name: '李裁判',
-            judge_username: 'judge002',
-            judge_sex: '女',
-            judge_phone: '13800138002',
-            judge_email: 'judge002@example.com',
-            judge_specialty: 'swimming',
-            judge_level: 'first',
-            judge_status: 1
-          }
-        ];
-        this.pagination.total = this.judgeList.length;
+        const params = {
+          page: this.pagination.currentPage,
+          pageSize: this.pagination.pageSize,
+          name: this.searchForm.name,
+          specialty: this.searchForm.specialty,
+          status: this.searchForm.status
+        };
+
+        const response = await this.$api.getAdminJudgeList(params);
+
+        if (response.success) {
+          this.judgeList = response.data.list;
+          this.pagination.total = response.data.pagination.total;
+        } else {
+          this.$message.error(response.message || '加载数据失败');
+        }
       } catch (error) {
         console.error('加载裁判员列表失败:', error);
         this.$message.error('加载数据失败，请稍后重试');
@@ -355,25 +345,94 @@ export default {
     },
 
     // 分配赛事
-    assignEvents(row) {
-      this.$message.info('赛事分配功能开发中');
+    async assignEvents(row) {
+      try {
+        // 获取可分配的比赛项目
+        const eventsResponse = await this.$api.getAdminAvailableEvents();
+        if (!eventsResponse.data.success) {
+          this.$message.error('获取比赛项目失败');
+          return;
+        }
+
+        const events = eventsResponse.data.data;
+        if (events.length === 0) {
+          this.$message.info('暂无可分配的比赛项目');
+          return;
+        }
+
+        // 显示分配对话框
+        this.$prompt('请选择要分配的比赛项目', '赛事分配', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputType: 'select',
+          inputOptions: events.reduce((options, event) => {
+            options[event.schedule_id] = `${event.schedule_name} (${event.schedule_date})`;
+            return options;
+          }, {}),
+          inputValidator: (value) => {
+            if (!value) {
+              return '请选择比赛项目';
+            }
+            return true;
+          }
+        }).then(async ({ value }) => {
+          const assignResponse = await this.$api.assignJudgeToEvent({
+            judge_id: row.judge_id,
+            schedule_id: parseInt(value),
+            notes: `管理员分配给${row.judge_name}`
+          });
+
+          if (assignResponse.data.success) {
+            this.$message.success(assignResponse.data.message);
+          } else {
+            this.$message.error(assignResponse.data.message || '分配失败');
+          }
+        });
+
+      } catch (error) {
+        console.error('分配赛事失败:', error);
+        this.$message.error('分配失败，请稍后重试');
+      }
     },
 
     // 删除裁判员
     deleteJudge(row) {
-      this.$confirm('确定要删除该裁判员吗？', '提示', {
+      this.$confirm('确定要删除该裁判员吗？删除后无法恢复！', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        this.$message.success('删除成功');
-        this.loadJudges();
+      }).then(async () => {
+        try {
+          const response = await this.$api.deleteAdminJudge(row.judge_id);
+          if (response.data.success) {
+            this.$message.success(response.data.message);
+            await this.loadJudges();
+          } else {
+            this.$message.error(response.data.message || '删除失败');
+          }
+        } catch (error) {
+          console.error('删除裁判员失败:', error);
+          this.$message.error('删除失败，请稍后重试');
+        }
       });
     },
 
     // 切换裁判员状态
-    toggleJudgeStatus(row) {
-      this.$message.success(`已${row.judge_status ? '启用' : '停用'}该裁判员`);
+    async toggleJudgeStatus(row) {
+      try {
+        const newStatus = row.judge_status === 1 ? 0 : 1;
+        const response = await this.$api.toggleJudgeStatus(row.judge_id, { status: newStatus });
+
+        if (response.data.success) {
+          this.$message.success(response.data.message);
+          row.judge_status = newStatus;
+        } else {
+          this.$message.error(response.data.message || '操作失败');
+        }
+      } catch (error) {
+        console.error('切换状态失败:', error);
+        this.$message.error('操作失败，请稍后重试');
+      }
     },
 
     // 保存裁判员
@@ -381,13 +440,23 @@ export default {
       try {
         await this.$refs.judgeForm.validate();
         this.judgeDialog.loading = true;
-        
-        // 模拟保存操作
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        this.$message.success(`裁判员${this.judgeDialog.isEdit ? '更新' : '创建'}成功`);
-        this.judgeDialog.visible = false;
-        await this.loadJudges();
+
+        let response;
+        if (this.judgeDialog.isEdit) {
+          // 更新裁判员
+          response = await this.$api.updateAdminJudge(this.judgeForm.judge_id, this.judgeForm);
+        } else {
+          // 创建裁判员
+          response = await this.$api.createAdminJudge(this.judgeForm);
+        }
+
+        if (response.data.success) {
+          this.$message.success(response.data.message);
+          this.judgeDialog.visible = false;
+          await this.loadJudges();
+        } else {
+          this.$message.error(response.data.message || '操作失败');
+        }
       } catch (error) {
         if (error !== 'validation') {
           console.error('保存裁判员失败:', error);

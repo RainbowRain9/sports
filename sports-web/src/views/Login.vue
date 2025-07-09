@@ -51,17 +51,31 @@ export default {
     handleLogin() {
       this.$refs.form.validate(async (valid) => {
         if (valid) {
-          const {
-            admin_type: type,
-            admin_name: name
-          } = await postLogin(this.form);
-          if (type === '1' || type === '2') {
-            this.$store.commit('SET_ADMIN_TYPE', type);
-            this.$store.commit('SET_USER_NAME', name);
-            this.$router.push('/project');
-          } else {
+          try {
+            const result = await postLogin(this.form);
+            console.log('登录响应:', result); // 调试日志
+
+            // 响应拦截器已经处理了格式，直接使用result
+            const {
+              admin_type: type,
+              admin_name: name
+            } = result;
+
+            if (type === '1' || type === '2') {
+              this.$store.commit('SET_ADMIN_TYPE', type);
+              this.$store.commit('SET_USER_NAME', name);
+              this.$router.push('/home');
+            } else {
+              this.$message({
+                message: '账号或密码错误',
+                type: 'error',
+                duration: 2000
+              });
+            }
+          } catch (error) {
+            console.error('登录失败:', error);
             this.$message({
-              message: '账号或密码错误',
+              message: '登录失败，请稍后重试',
               type: 'error',
               duration: 2000
             });
