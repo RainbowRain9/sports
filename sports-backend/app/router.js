@@ -31,6 +31,43 @@ module.exports = app => {
   router.delete('/api/registration/:registrationId', app.middleware.auth(), controller.registration.cancelRegistration);
   router.post('/api/registration/check-limits', app.middleware.auth(), controller.registration.checkLimits);
 
+  // 管理员报名审核API
+  router.get('/api/admin/registrations/pending', app.middleware.auth(), controller.registrationAdmin.getPendingRegistrations);
+  router.post('/api/admin/registrations/batch-review', app.middleware.auth(), controller.registrationAdmin.batchReviewRegistrations);
+  router.put('/api/admin/registrations/:registrationId/review', app.middleware.auth(), controller.registrationAdmin.reviewRegistration);
+  router.get('/api/admin/registrations/:registrationId/workflow', app.middleware.auth(), controller.registrationAdmin.getReviewWorkflow);
+  router.get('/api/admin/registrations/stats', app.middleware.auth(), controller.registrationAdmin.getRegistrationStats);
+  router.get('/api/admin/registrations/history', app.middleware.auth(), controller.registrationAdmin.getReviewHistory);
+  router.get('/api/admin/registrations/export', app.middleware.auth(), controller.registrationAdmin.exportRegistrations);
+
+  // 系统配置管理API
+  router.get('/api/admin/system/config', app.middleware.auth(), controller.systemConfig.getConfigs);
+  router.get('/api/system/config/public', controller.systemConfig.getPublicConfigs);
+  router.get('/api/admin/system/config/:configKey', app.middleware.auth(), controller.systemConfig.getConfig);
+  router.post('/api/admin/system/config', app.middleware.auth(), controller.systemConfig.createConfig);
+  router.put('/api/admin/system/config/:configKey', app.middleware.auth(), controller.systemConfig.updateConfig);
+  router.delete('/api/admin/system/config/:configKey', app.middleware.auth(), controller.systemConfig.deleteConfig);
+  router.put('/api/admin/system/config/batch', app.middleware.auth(), controller.systemConfig.batchUpdateConfigs);
+
+  // 系统通知API
+  router.get('/api/notifications', app.middleware.auth(), controller.systemNotification.getNotifications);
+  router.get('/api/notifications/unread-count', app.middleware.auth(), controller.systemNotification.getUnreadCount);
+  router.put('/api/notifications/:notificationId/read', app.middleware.auth(), controller.systemNotification.markAsRead);
+  router.put('/api/notifications/batch-read', app.middleware.auth(), controller.systemNotification.batchMarkAsRead);
+  router.put('/api/notifications/mark-all-read', app.middleware.auth(), controller.systemNotification.markAllAsRead);
+  router.delete('/api/notifications/:notificationId', app.middleware.auth(), controller.systemNotification.deleteNotification);
+  router.post('/api/admin/notifications/send', app.middleware.auth(), controller.systemNotification.sendNotification);
+  router.get('/api/admin/notifications/stats', app.middleware.auth(), controller.systemNotification.getNotificationStats);
+
+  // 操作日志API
+  router.get('/api/admin/operation-logs', app.middleware.auth(), controller.operationLog.getLogs);
+  router.get('/api/admin/operation-logs/stats', app.middleware.auth(), controller.operationLog.getLogStats);
+  router.get('/api/admin/operation-logs/export', app.middleware.auth(), controller.operationLog.exportLogs);
+  router.delete('/api/admin/operation-logs/cleanup', app.middleware.auth(), controller.operationLog.cleanupLogs);
+  router.get('/api/admin/operation-logs/user/:userId', app.middleware.auth(), controller.operationLog.getUserOperationHistory);
+  router.get('/api/admin/operation-logs/operations', app.middleware.auth(), controller.operationLog.getOperationTypes);
+  router.get('/api/admin/operation-logs/targets', app.middleware.auth(), controller.operationLog.getTargetTypes);
+
   // 裁判员专用API
   router.get('/api/judge/profile', app.middleware.auth(), controller.judge.getProfile);
   router.put('/api/judge/profile', app.middleware.auth(), controller.judge.updateProfile);

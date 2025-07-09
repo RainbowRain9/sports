@@ -43,10 +43,10 @@ class PlogService extends Service {
         return resItem.plog_adminid === admin.admin_id;
       });
       return {
-        plog_playernumber: playElement.player_number,
-        plog_playername: playElement.player_name,
-        plog_schedulename: comElement.schedule_name,
-        plog_adminname: adminElement.admin_name,
+        plog_playernumber: playElement ? playElement.player_number : '',
+        plog_playername: playElement ? playElement.player_name : '',
+        plog_schedulename: comElement ? comElement.schedule_name : '',
+        plog_adminname: adminElement ? adminElement.admin_name : '',
         ...resItem,
       };
     });

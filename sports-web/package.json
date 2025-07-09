@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "start": "npm run serve",
-    "serve": "vue-cli-service serve",
-    "build:test": "vue-cli-service build --mode integration",
-    "build": "vue-cli-service build",
+    "serve": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service serve",
+    "build:test": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build --mode integration",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "axios": "^0.18.0",
     "bcryptjs": "^3.0.2",
+    "echarts": "^4.9.0",
     "element-ui": "^2.12.0",
     "file-saver": "^2.0.2",
     "jsonwebtoken": "^9.0.2",
@@ -31,7 +32,7 @@
     "less-loader": "^4.1.0",
     "postcss-px2rem": "^0.3.0",
     "px2rem-loader": "^0.1.9",
-    "vue-template-compiler": "^2.5.16"
+    "vue-template-compiler": "^2.7.16"
   },
   "browserslist": [
     "> 1%",

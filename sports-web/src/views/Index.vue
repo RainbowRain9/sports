@@ -15,21 +15,61 @@
                  @open="handleOpen"
                  router
                  @close="handleClose">
+          <!-- 数据统计 -->
+          <el-menu-item index="/admin-dashboard">
+            <i class="el-icon-data-analysis"></i>
+            <span slot="title">数据统计</span>
+          </el-menu-item>
+
+          <!-- 报名管理 - 暂时禁用 -->
+          <!-- <el-menu-item index="/registration-review">
+            <i class="el-icon-s-check"></i>
+            <span slot="title">报名审核</span>
+          </el-menu-item> -->
+
+          <!-- 基础管理 -->
           <el-menu-item index="/project">
+            <i class="el-icon-collection"></i>
             <span slot="title">项目类型</span>
           </el-menu-item>
           <el-menu-item index="/competition">
+            <i class="el-icon-trophy"></i>
             <span slot="title">比赛项目</span>
           </el-menu-item>
           <el-menu-item index="/plog">
+            <i class="el-icon-document"></i>
             <span slot="title">参赛记录</span>
           </el-menu-item>
+
+          <!-- 人员管理 -->
           <el-menu-item index="/player">
+            <i class="el-icon-user"></i>
             <span slot="title">运动员管理</span>
+          </el-menu-item>
+          <el-menu-item index="/judge-management"
+                        v-if="adminType === '2'">
+            <i class="el-icon-user-solid"></i>
+            <span slot="title">裁判员管理</span>
           </el-menu-item>
           <el-menu-item index="/admin"
                         v-if="adminType === '2'">
+            <i class="el-icon-s-custom"></i>
             <span slot="title">操作员管理</span>
+          </el-menu-item>
+
+          <!-- 系统管理 -->
+          <el-menu-item index="/system-config"
+                        v-if="adminType === '2'">
+            <i class="el-icon-setting"></i>
+            <span slot="title">系统配置</span>
+          </el-menu-item>
+          <el-menu-item index="/notifications">
+            <i class="el-icon-bell"></i>
+            <span slot="title">通知中心</span>
+          </el-menu-item>
+          <el-menu-item index="/operation-logs">
+            <i class="el-icon-document-copy"></i>
+            <span slot="title">操作日志</span>
           </el-menu-item>
         </el-menu>
 

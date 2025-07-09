@@ -7,6 +7,14 @@ import router from './router';
 import store from './store';
 import { permissionDirective, roleDirective } from '@/utils/permission';
 
+// 引入ECharts
+import echarts from 'echarts';
+Vue.prototype.$echarts = echarts;
+
+// 引入HTTP客户端
+import { demo as httpClient } from '@/api/adapter';
+Vue.prototype.$http = httpClient;
+
 Vue.use(ElementUI);
 Vue.use(Logger, { debug: false });
 

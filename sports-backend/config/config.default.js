@@ -16,7 +16,7 @@ module.exports = appInfo => {
   config.keys = appInfo.name + '_1570367216778_7082';
 
   exports.security = {
-    csrf: false,
+    csrf: { enable: false },
   };
   config.cors = {
     credentials: true,

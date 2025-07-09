@@ -48,6 +48,42 @@ const router = new Router({
           component: () => import('../views/Admin.vue'),
           meta: { requiresAuth: true, roles: ['admin'] }
         },
+        // {
+        //   path: '/registration-review',
+        //   name: 'registration-review',
+        //   component: () => import('../views/RegistrationReview.vue'),
+        //   meta: { requiresAuth: true, roles: ['admin', 'operator'] }
+        // },
+        {
+          path: '/system-config',
+          name: 'system-config',
+          component: () => import('../views/SystemConfig.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'operator'] }
+        },
+        {
+          path: '/notifications',
+          name: 'notifications',
+          component: () => import('../views/NotificationCenter.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: '/operation-logs',
+          name: 'operation-logs',
+          component: () => import('../views/OperationLogs.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'operator'] }
+        },
+        {
+          path: '/admin-dashboard',
+          name: 'admin-dashboard',
+          component: () => import('../views/AdminDashboard.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'operator'] }
+        },
+        {
+          path: '/judge-management',
+          name: 'judge-management',
+          component: () => import('../views/JudgeManagement.vue'),
+          meta: { requiresAuth: true, roles: ['admin'] }
+        },
         {
           path: '/plog',
           name: 'plog',

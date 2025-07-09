@@ -26,6 +26,42 @@ export const getMyRegistrations = async params => await demo.get('/api/registrat
 export const cancelRegistration = async registrationId => await demo.delete(`/api/registration/${registrationId}`);
 export const checkRegistrationLimits = async data => await demo.post('/api/registration/check-limits', data);
 
+// 管理员报名审核API
+export const getPendingRegistrations = async params => await demo.get('/api/admin/registrations/pending', { params });
+export const batchReviewRegistrations = async data => await demo.post('/api/admin/registrations/batch-review', data);
+export const reviewRegistration = async (registrationId, data) => await demo.put(`/api/admin/registrations/${registrationId}/review`, data);
+export const getRegistrationStats = async params => await demo.get('/api/admin/registrations/stats', { params });
+export const getReviewHistory = async params => await demo.get('/api/admin/registrations/history', { params });
+export const exportRegistrations = async params => await demo.get('/api/admin/registrations/export', { params });
+
+// 系统配置管理API
+export const getSystemConfigs = async params => await demo.get('/api/admin/system/config', { params });
+export const getPublicConfigs = async () => await demo.get('/api/system/config/public');
+export const getSystemConfig = async configKey => await demo.get(`/api/admin/system/config/${configKey}`);
+export const createSystemConfig = async data => await demo.post('/api/admin/system/config', data);
+export const updateSystemConfig = async (configKey, data) => await demo.put(`/api/admin/system/config/${configKey}`, data);
+export const deleteSystemConfig = async configKey => await demo.delete(`/api/admin/system/config/${configKey}`);
+export const batchUpdateSystemConfigs = async data => await demo.put('/api/admin/system/config/batch', data);
+
+// 系统通知API
+export const getNotifications = async params => await demo.get('/api/notifications', { params });
+export const getUnreadCount = async () => await demo.get('/api/notifications/unread-count');
+export const markNotificationAsRead = async notificationId => await demo.put(`/api/notifications/${notificationId}/read`);
+export const batchMarkAsRead = async data => await demo.put('/api/notifications/batch-read', data);
+export const markAllAsRead = async () => await demo.put('/api/notifications/mark-all-read');
+export const deleteNotification = async notificationId => await demo.delete(`/api/notifications/${notificationId}`);
+export const sendNotification = async data => await demo.post('/api/admin/notifications/send', data);
+export const getNotificationStats = async params => await demo.get('/api/admin/notifications/stats', { params });
+
+// 操作日志API
+export const getOperationLogs = async params => await demo.get('/api/admin/operation-logs', { params });
+export const getOperationLogStats = async params => await demo.get('/api/admin/operation-logs/stats', { params });
+export const exportOperationLogs = async params => await demo.get('/api/admin/operation-logs/export', { params });
+export const cleanupOperationLogs = async data => await demo.delete('/api/admin/operation-logs/cleanup', { data });
+export const getUserOperationHistory = async (userId, params) => await demo.get(`/api/admin/operation-logs/user/${userId}`, { params });
+export const getOperationTypes = async () => await demo.get('/api/admin/operation-logs/operations');
+export const getTargetTypes = async () => await demo.get('/api/admin/operation-logs/targets');
+
 // 裁判员专用API
 export const getJudgeProfile = async () => await demo.get('/api/judge/profile');
 export const updateJudgeProfile = async data => await demo.put('/api/judge/profile', data);
