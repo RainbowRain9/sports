@@ -60,6 +60,30 @@
             <span slot="title">我的成绩</span>
           </el-menu-item>
         </el-menu>
+
+        <!-- 裁判员菜单 -->
+        <el-menu v-if="isJudge"
+                 :default-active="defaultActive"
+                 @open="handleOpen"
+                 router
+                 @close="handleClose">
+          <el-menu-item index="/judge-home">
+            <i class="el-icon-s-home"></i>
+            <span slot="title">个人中心</span>
+          </el-menu-item>
+          <el-menu-item index="/judge/events">
+            <i class="el-icon-calendar"></i>
+            <span slot="title">我的赛事</span>
+          </el-menu-item>
+          <el-menu-item index="/judge/score-input">
+            <i class="el-icon-edit"></i>
+            <span slot="title">成绩录入</span>
+          </el-menu-item>
+          <el-menu-item index="/judge/profile">
+            <i class="el-icon-user"></i>
+            <span slot="title">个人信息</span>
+          </el-menu-item>
+        </el-menu>
       </el-aside>
       <el-main>
         <router-view></router-view>

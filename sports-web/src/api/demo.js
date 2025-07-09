@@ -26,6 +26,18 @@ export const getMyRegistrations = async params => await demo.get('/api/registrat
 export const cancelRegistration = async registrationId => await demo.delete(`/api/registration/${registrationId}`);
 export const checkRegistrationLimits = async data => await demo.post('/api/registration/check-limits', data);
 
+// 裁判员专用API
+export const getJudgeProfile = async () => await demo.get('/api/judge/profile');
+export const updateJudgeProfile = async data => await demo.put('/api/judge/profile', data);
+export const getJudgeStats = async () => await demo.get('/api/judge/stats');
+export const changeJudgePassword = async data => await demo.put('/api/judge/password', data);
+export const getJudgeAssignedEvents = async params => await demo.get('/api/judge/events', { params });
+export const getEventParticipants = async scheduleId => await demo.get(`/api/judge/events/${scheduleId}/participants`);
+export const getEventScores = async scheduleId => await demo.get(`/api/judge/events/${scheduleId}/scores`);
+export const createScore = async data => await demo.post('/api/judge/scores', data);
+export const updateScore = async (scoreId, data) => await demo.put(`/api/judge/scores/${scoreId}`, data);
+export const deleteScore = async scoreId => await demo.delete(`/api/judge/scores/${scoreId}`);
+
 // 项目管理模块
 export const getProjects = async params =>
   await demo.get('/projects', { params });

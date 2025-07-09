@@ -33,6 +33,16 @@ sports-backend/package-lock.json
 # Augment memory system
 .augment_memory/
 .augment_memory_config/
+.augment/
 
 # CI/CD files
 .github/
+
+# Temporary files
+/tmp/
+*.tmp
+*.log
+
+# Database dumps
+*.sql.backup
+*.sql.dump

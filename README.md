@@ -4,11 +4,13 @@
 
 ## 🎯 系统特色
 
-- **多角色权限管理**: 支持管理员、操作员、运动员、裁判员四种角色
-- **运动员自助系统**: 完整的运动员专用功能模块
-- **在线报名系统**: 智能报名限制和状态管理
-- **成绩管理**: 完善的成绩录入和查询功能
-- **响应式设计**: 支持桌面端和移动端访问
+- **多角色权限管理**: 支持管理员、操作员、运动员、裁判员四种角色，基于JWT Token和RBAC权限控制
+- **运动员自助系统**: 完整的运动员专用功能模块，支持在线报名、成绩查询、个人信息管理
+- **裁判员专用系统**: 现代化的裁判员工作平台，包含赛事管理、成绩录入、工作统计等功能
+- **在线报名系统**: 智能报名限制和状态管理，支持实时数据同步
+- **成绩管理**: 完善的成绩录入和查询功能，支持单个录入和批量录入
+- **现代化UI设计**: 采用渐变色彩、毛玻璃效果、微交互动画等现代设计元素
+- **响应式设计**: 支持桌面端和移动端访问，适配多种屏幕尺寸
 
 ## 📚 相关链接
 - [项目在线链接](http://39.105.108.226:7001)
@@ -18,10 +20,16 @@
 - [项目数据库sql文件](./sports-backend/sports.sql)
 
 ## 📖 项目文档
+
+### 系统使用指南
 - [运动员自助系统使用指南](./docs/player-system-guide.md)
+- [裁判员专用系统部署指南](./docs/judge-system-deployment.md)
+
+### 开发文档
 - [系统部署指南](./docs/deployment-guide.md)
 - [功能测试清单](./docs/testing-checklist.md)
 - [项目开发总结](./docs/project-summary.md)
+- [裁判员系统样式优化指南](./docs/judge-system-style-optimization.md)
 
 ## 🚀 快速开始
 
@@ -39,6 +47,9 @@ mysql -u root -p sports < sports-backend/database/multi-role-auth-extension.sql
 
 # 导入运动员自助系统扩展
 mysql -u root -p sports < sports-backend/database/player-registration-extension.sql
+
+# 导入裁判员专用系统扩展
+mysql -u root -p sports < sports-backend/database/judge-system-extension.sql
 ```
 
 ### 2. 后端部署 (sports-backend)
@@ -86,7 +97,9 @@ NODE_OPTIONS="--openssl-legacy-provider" npm run build
 - **李三**: 003 / 123456
 
 ### 裁判员账号
-- **裁判员**: judge001 / 123456
+- **张裁判**: judge001 / 123456 (田径项目)
+- **李裁判**: judge002 / 123456 (游泳项目)
+- **王裁判**: judge003 / 123456 (球类项目)
 
 ## 🎮 功能模块
 
@@ -144,6 +157,33 @@ NODE_OPTIONS="--openssl-legacy-provider" npm run build
 - 用户权限管理
 - 系统配置
 - 数据统计
+
+### ⚖️ 裁判员专用系统
+现代化的裁判员工作平台，提供专业的执裁管理功能：
+
+#### 个人中心
+- 工作统计和数据展示
+- 今日执裁安排
+- 快捷操作入口
+- 最近录入成绩
+
+#### 赛事管理
+- 查看分配的比赛项目
+- 赛事详情和参赛选手名单
+- 比赛进度跟踪
+- 执裁状态管理
+
+#### 成绩录入
+- 单个成绩录入模式
+- 批量成绩录入模式
+- 成绩修改和删除
+- 数据验证和权限控制
+
+#### 个人信息管理
+- 基本信息编辑
+- 专业特长管理
+- 密码修改
+- 账号状态查看
 
 ## 🏗️ 技术架构
 

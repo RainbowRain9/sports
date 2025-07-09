@@ -94,6 +94,51 @@ const router = new Router({
           meta: { requiresAuth: true, roles: ['player'] }
         }
       ]
+    },
+    // 裁判员专用路由
+    {
+      path: '/judge',
+      name: 'judge-layout',
+      component: () => import('../views/JudgeLayout.vue'),
+      meta: { requiresAuth: true, roles: ['judge'] },
+      children: [
+        {
+          path: '/judge-home',
+          name: 'judge-home',
+          component: () => import('../views/JudgeDashboard.vue'),
+          meta: { requiresAuth: true, roles: ['judge'] }
+        },
+        {
+          path: '/judge/profile',
+          name: 'judge-profile',
+          component: () => import('../views/JudgeProfile.vue'),
+          meta: { requiresAuth: true, roles: ['judge'] }
+        },
+        {
+          path: '/judge/events',
+          name: 'judge-events',
+          component: () => import('../views/JudgeEvents.vue'),
+          meta: { requiresAuth: true, roles: ['judge'] }
+        },
+        {
+          path: '/judge/schedule',
+          name: 'judge-schedule',
+          component: () => import('../views/JudgeEvents.vue'),
+          meta: { requiresAuth: true, roles: ['judge'] }
+        },
+        {
+          path: '/judge/score-input',
+          name: 'judge-score-input',
+          component: () => import('../views/JudgeScoreInput.vue'),
+          meta: { requiresAuth: true, roles: ['judge'] }
+        },
+        {
+          path: '/judge/score-manage',
+          name: 'judge-score-manage',
+          component: () => import('../views/JudgeScoreInput.vue'),
+          meta: { requiresAuth: true, roles: ['judge'] }
+        }
+      ]
     }
   ]
 });

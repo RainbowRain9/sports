@@ -31,6 +31,18 @@ module.exports = app => {
   router.delete('/api/registration/:registrationId', app.middleware.auth(), controller.registration.cancelRegistration);
   router.post('/api/registration/check-limits', app.middleware.auth(), controller.registration.checkLimits);
 
+  // 裁判员专用API
+  router.get('/api/judge/profile', app.middleware.auth(), controller.judge.getProfile);
+  router.put('/api/judge/profile', app.middleware.auth(), controller.judge.updateProfile);
+  router.get('/api/judge/stats', app.middleware.auth(), controller.judge.getStats);
+  router.put('/api/judge/password', app.middleware.auth(), controller.judge.changePassword);
+  router.get('/api/judge/events', app.middleware.auth(), controller.judge.getAssignedEvents);
+  router.get('/api/judge/events/:scheduleId/participants', app.middleware.auth(), controller.judge.getEventParticipants);
+  router.get('/api/judge/events/:scheduleId/scores', app.middleware.auth(), controller.judge.getEventScores);
+  router.post('/api/judge/scores', app.middleware.auth(), controller.judge.createScore);
+  router.put('/api/judge/scores/:scoreId', app.middleware.auth(), controller.judge.updateScore);
+  router.delete('/api/judge/scores/:scoreId', app.middleware.auth(), controller.judge.deleteScore);
+
   // 运动员管理
   router.get('/players', controller.player.index);
   router.post('/players', controller.player.create);
