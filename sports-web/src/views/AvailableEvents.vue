@@ -180,8 +180,8 @@
       
       <span slot="footer" class="dialog-footer">
         <el-button @click="confirmDialogVisible = false">取消</el-button>
-        <el-button 
-          type="primary" 
+        <el-button
+          type="primary"
           @click="confirmRegistration"
           :loading="confirming"
         >
@@ -193,7 +193,11 @@
 </template>
 
 <script>
-import { getAvailableEvents, createRegistration, checkRegistrationLimits } from '@/api/demo';
+import {
+  getAvailableEvents,
+  createRegistration,
+  checkRegistrationLimits
+} from '@/api/demo';
 
 export default {
   name: 'AvailableEvents',
@@ -252,15 +256,14 @@ export default {
         this.loading = false;
       }
     },
-    
+
     async refreshEvents() {
       await this.loadEvents();
       this.$message.success('项目列表已刷新');
     },
-    
+
     applyFilter() {
       let filtered = [...this.events];
-      
       // 按项目类型筛选
       if (this.filterForm.itemType) {
         filtered = filtered.filter(event =>

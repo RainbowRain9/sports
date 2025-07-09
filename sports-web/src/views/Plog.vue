@@ -300,10 +300,42 @@ export default {
           let func = null;
           let data = {};
           let admin = {};
+
           if (this.handleType === 'add') {
-            admin = (await getAdmins()).find(item =>
-              item.admin_name === this.$store.state.userName);
+            // 优先从新认证系统获取用户ID
+            const currentUser = this.$store.state.auth.user;
+
+            if (currentUser && currentUser.userType === 'admin') {
+              // 新认证系统：直接使用用户ID
+              admin = { admin_id: currentUser.id };
+            } else {
+              // 兼容旧系统：通过用户名查找管理员信息
+              const currentUserName = this.$store.getters['auth/userName'] || this.$store.state.userName;
+
+              if (!currentUserName) {
+                this.$message({
+                  message: '无法获取当前用户信息，请重新登录',
+                  type: 'error',
+                  duration: 2000
+                });
+                return false;
+              }
+
+              // 查找管理员信息
+              const adminList = await getAdmins();
+              admin = adminList.find(item => item.admin_name === currentUserName);
+
+              if (!admin) {
+                this.$message({
+                  message: `未找到管理员信息：${currentUserName}，请联系系统管理员`,
+                  type: 'error',
+                  duration: 3000
+                });
+                return false;
+              }
+            }
           }
+
           switch (this.handleType) {
             case 'add':
               data = {
@@ -329,6 +361,7 @@ export default {
             default:
               break;
           }
+
           func.then(() => {
             this.$message({
               message: '操作成功',
@@ -337,7 +370,8 @@ export default {
             });
             this.getPorjects();
             this.projectDialogVisible = false;
-          }).catch(() => {
+          }).catch((error) => {
+            console.error('操作失败:', error);
             this.$message({
               message: '该人员已经存在',
               type: 'error',
