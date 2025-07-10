@@ -73,7 +73,18 @@
               <span>成绩管理</span>
             </el-menu-item>
           </el-submenu>
-          
+
+          <el-menu-item index="/judge/notifications">
+            <i class="el-icon-bell"></i>
+            <span slot="title">通知中心</span>
+            <el-badge
+              v-if="unreadCount > 0"
+              :value="unreadCount"
+              :max="99"
+              class="notification-badge"
+            />
+          </el-menu-item>
+
           <el-menu-item index="/judge/profile">
             <i class="el-icon-user"></i>
             <span slot="title">个人信息</span>
@@ -196,12 +207,32 @@ export default {
         '/judge/events': { name: '我的赛事', path: '/judge/events' },
         '/judge/schedule': { name: '执裁安排', path: '/judge/schedule' },
         '/judge/score-input': { name: '成绩录入', path: '/judge/score-input' },
-        '/judge/score-manage': { name: '成绩管理', path: '/judge/score-manage' }
+        '/judge/score-manage': { name: '成绩管理', path: '/judge/score-manage' },
+        '/judge/notifications': { name: '通知中心', path: '/judge/notifications' }
       };
-      
+
       const currentRoute = routeMap[this.$route.path];
       return currentRoute ? [currentRoute] : [];
+    },
+
+    // 获取未读通知数量
+    unreadCount() {
+      return this.$store.getters['notification/unreadCount'];
     }
+  },
+
+  async created() {
+    // 等待一小段时间确保认证状态稳定，然后初始化通知模块
+    this.$nextTick(async () => {
+      if (this.$store.getters['auth/isLoggedIn']) {
+        await this.$store.dispatch('notification/initNotifications');
+      }
+    });
+  },
+
+  beforeDestroy() {
+    // 清理通知模块
+    this.$store.dispatch('notification/stopAutoRefresh');
   },
   methods: {
     handleCommand(command) {
@@ -440,5 +471,17 @@ export default {
 
 .dialog-footer {
   text-align: right;
+}
+
+/* 通知徽章样式 */
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.notification-badge .el-badge__content {
+  background-color: #f56c6c;
+  border: 1px solid #fff;
 }
 </style>

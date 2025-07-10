@@ -5,6 +5,16 @@ import store from '../store';
 // router lazy load
 Vue.use(Router);
 
+// 解决重复导航错误
+const originalPush = Router.prototype.push;
+Router.prototype.push = function push(location) {
+  return originalPush.call(this, location).catch(err => {
+    if (err.name !== 'NavigationDuplicated') {
+      throw err;
+    }
+  });
+};
+
 const router = new Router({
   // mode: 'history',
   base: process.env.BASE_URL,
@@ -134,6 +144,12 @@ const router = new Router({
           name: 'player-scores',
           component: () => import('../views/PlayerScores.vue'),
           meta: { requiresAuth: true, roles: ['player'] }
+        },
+        {
+          path: '/player/notifications',
+          name: 'player-notifications',
+          component: () => import('../views/NotificationCenter.vue'),
+          meta: { requiresAuth: true, roles: ['player'] }
         }
       ]
     },
@@ -178,6 +194,12 @@ const router = new Router({
           path: '/judge/score-manage',
           name: 'judge-score-manage',
           component: () => import('../views/JudgeScoreInput.vue'),
+          meta: { requiresAuth: true, roles: ['judge'] }
+        },
+        {
+          path: '/judge/notifications',
+          name: 'judge-notifications',
+          component: () => import('../views/NotificationCenter.vue'),
           meta: { requiresAuth: true, roles: ['judge'] }
         }
       ]

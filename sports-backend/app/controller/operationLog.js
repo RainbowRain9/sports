@@ -26,6 +26,18 @@ class OperationLogController extends Controller {
         };
         return;
       }
+
+      // 权限控制：普通管理员只能查看自己的操作记录
+      let restrictUserId = null;
+      if (ctx.user.userType === 'operator' ||
+          (ctx.user.userType === 'admin' && ctx.user.roleSubType && ctx.user.roleSubType !== '2')) {
+        restrictUserId = ctx.user.userId;
+      }
+
+      // 如果是admin用户但没有roleSubType字段，默认为超级管理员权限
+      if (ctx.user.userType === 'admin' && !ctx.user.roleSubType) {
+        restrictUserId = null; // 超级管理员可以查看所有数据
+      }
       
       const { 
         page = 1, 
@@ -46,7 +58,8 @@ class OperationLogController extends Controller {
         targetType,
         result,
         dateRange,
-        userId: userId ? parseInt(userId) : null
+        userId: userId ? parseInt(userId) : restrictUserId,
+        restrictUserId // 传递权限限制
       });
       
       ctx.status = 200;
@@ -85,11 +98,24 @@ class OperationLogController extends Controller {
         };
         return;
       }
-      
+
+      // 权限控制：普通管理员只能查看自己的统计数据
+      let restrictUserId = null;
+      if (ctx.user.userType === 'operator' ||
+          (ctx.user.userType === 'admin' && ctx.user.roleSubType && ctx.user.roleSubType !== '2')) {
+        restrictUserId = ctx.user.userId;
+      }
+
+      // 如果是admin用户但没有roleSubType字段，默认为超级管理员权限
+      if (ctx.user.userType === 'admin' && !ctx.user.roleSubType) {
+        restrictUserId = null; // 超级管理员可以查看所有数据
+      }
+
       const { dateRange } = ctx.query;
-      
+
       const stats = await ctx.service.operationLog.getLogStats({
-        dateRange
+        dateRange,
+        restrictUserId
       });
       
       ctx.status = 200;
@@ -391,6 +417,100 @@ class OperationLogController extends Controller {
       
     } catch (error) {
       ctx.logger.error('获取目标类型列表失败:', error);
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        code: 500,
+        message: '服务器内部错误'
+      };
+    }
+  }
+
+  /**
+   * 获取安全审计数据
+   * GET /api/admin/operation-logs/security-audit
+   */
+  async getSecurityAudit() {
+    const { ctx } = this;
+
+    try {
+      // 验证超级管理员权限
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
+        ctx.status = 403;
+        ctx.body = {
+          success: false,
+          code: 403,
+          message: '权限不足：仅超级管理员可访问安全审计'
+        };
+        return;
+      }
+
+      const auditData = await ctx.service.operationLog.getSecurityAuditData();
+
+      ctx.status = 200;
+      ctx.body = {
+        success: true,
+        code: 200,
+        data: auditData
+      };
+
+    } catch (error) {
+      ctx.logger.error('获取安全审计数据失败:', error);
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        code: 500,
+        message: '服务器内部错误'
+      };
+    }
+  }
+
+  /**
+   * 导出安全审计报告
+   * GET /api/admin/operation-logs/export-security-report
+   */
+  async exportSecurityReport() {
+    const { ctx } = this;
+
+    try {
+      // 验证超级管理员权限
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
+        ctx.status = 403;
+        ctx.body = {
+          success: false,
+          code: 403,
+          message: '权限不足：仅超级管理员可导出安全报告'
+        };
+        return;
+      }
+
+      const result = await ctx.service.operationLog.exportSecurityReport();
+
+      if (result.success) {
+        // 记录导出操作
+        await ctx.service.operationLog.log({
+          userId: ctx.user.userId,
+          userType: ctx.user.userType,
+          operation: 'export_security_report',
+          targetType: 'security_audit',
+          details: { export_time: new Date().toISOString() },
+          result: 'success'
+        });
+
+        ctx.set('Content-Type', result.contentType);
+        ctx.set('Content-Disposition', `attachment; filename="${result.filename}"`);
+        ctx.body = result.data;
+      } else {
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          code: 400,
+          message: result.message
+        };
+      }
+
+    } catch (error) {
+      ctx.logger.error('导出安全审计报告失败:', error);
       ctx.status = 500;
       ctx.body = {
         success: false,

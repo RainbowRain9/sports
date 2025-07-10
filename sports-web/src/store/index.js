@@ -3,6 +3,7 @@ import Vuex from 'vuex';
 import * as mutations from './mutations';
 import * as actions from './actions';
 import auth from './modules/auth';
+import notification from './modules/notification';
 
 Vue.use(Vuex);
 
@@ -15,7 +16,8 @@ export default new Vuex.Store({
   mutations,
   actions,
   modules: {
-    auth
+    auth,
+    notification
   },
   strict: process.env.NODE_ENV !== 'production'
 });

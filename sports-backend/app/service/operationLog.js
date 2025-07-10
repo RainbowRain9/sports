@@ -45,7 +45,7 @@ class OperationLogService extends Service {
    */
   async getLogs(params) {
     const { app } = this;
-    const { page, pageSize, userType, operation, targetType, result, dateRange, userId } = params;
+    const { page, pageSize, userType, operation, targetType, result, dateRange, userId, restrictUserId } = params;
     
     try {
       // 构建查询条件
@@ -75,6 +75,12 @@ class OperationLogService extends Service {
       if (userId) {
         whereConditions.push('user_id = ?');
         queryParams.push(userId);
+      }
+
+      // 权限限制：非超级管理员只能查看自己的操作记录
+      if (restrictUserId) {
+        whereConditions.push('user_id = ?');
+        queryParams.push(restrictUserId);
       }
       
       if (dateRange) {
@@ -147,7 +153,7 @@ class OperationLogService extends Service {
    */
   async getLogStats(params) {
     const { app } = this;
-    const { dateRange } = params;
+    const { dateRange, restrictUserId } = params;
     
     try {
       let dateCondition = '';
@@ -157,6 +163,16 @@ class OperationLogService extends Service {
         const [startDate, endDate] = dateRange.split(',');
         dateCondition = 'WHERE DATE(created_at) BETWEEN ? AND ?';
         queryParams = [startDate, endDate];
+      }
+
+      // 权限限制：非超级管理员只能查看自己的统计数据
+      if (restrictUserId) {
+        if (dateCondition) {
+          dateCondition += ' AND user_id = ?';
+        } else {
+          dateCondition = 'WHERE user_id = ?';
+        }
+        queryParams.push(restrictUserId);
       }
       
       // 基础统计
@@ -203,25 +219,43 @@ class OperationLogService extends Service {
       const userTypeStats = await app.mysql.query(userTypeStatsSql, queryParams);
       
       // 按日期统计（最近7天）
-      const dailyStatsSql = `
-        SELECT 
+      let dailyStatsSql = `
+        SELECT
           DATE(created_at) as date,
           COUNT(*) as count,
           COUNT(CASE WHEN result = 'success' THEN 1 END) as success_count,
           COUNT(CASE WHEN result = 'failed' THEN 1 END) as failed_count
         FROM operation_log
         WHERE DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+      `;
+
+      let dailyQueryParams = [];
+
+      // 权限限制：非超级管理员只能查看自己的统计数据
+      if (restrictUserId) {
+        dailyStatsSql += ' AND user_id = ?';
+        dailyQueryParams.push(restrictUserId);
+      }
+
+      dailyStatsSql += `
         GROUP BY DATE(created_at)
         ORDER BY date DESC
       `;
+
+      const dailyStats = await app.mysql.query(dailyStatsSql, dailyQueryParams);
       
-      const dailyStats = await app.mysql.query(dailyStatsSql);
-      
+      // 处理用户活跃度数据
+      const userActivity = {};
+      userTypeStats.forEach(item => {
+        userActivity[item.user_type] = item.count;
+      });
+
       return {
         basic: basicStats[0],
-        byOperation: operationStats,
-        byUserType: userTypeStats,
-        daily: dailyStats
+        operation_types: operationStats,
+        user_types: userTypeStats,
+        user_activity: userActivity,
+        trend: dailyStats.reverse() // 按时间正序排列
       };
       
     } catch (error) {
@@ -366,6 +400,182 @@ class OperationLogService extends Service {
       this.logger.error('获取用户操作历史失败:', error);
       throw error;
     }
+  }
+
+  /**
+   * 获取安全审计数据
+   * @returns {object} 安全审计数据
+   */
+  async getSecurityAuditData() {
+    const { app } = this;
+
+    try {
+      // 获取安全统计数据
+      const securityStatsSql = `
+        SELECT
+          COUNT(CASE WHEN operation = 'login' AND result = 'failed' THEN 1 END) as failed_logins,
+          COUNT(DISTINCT CASE WHEN operation = 'login' AND result = 'failed' THEN ip_address END) as suspicious_ips,
+          COUNT(CASE WHEN operation IN ('create_user', 'delete_user', 'update_user', 'create_config', 'delete_config') THEN 1 END) as privilege_operations,
+          COUNT(CASE WHEN operation LIKE '%export%' THEN 1 END) as data_exports
+        FROM operation_log
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      `;
+
+      const statsResult = await app.mysql.query(securityStatsSql);
+      const stats = statsResult[0];
+
+      // 获取安全事件列表
+      const securityEventsSql = `
+        SELECT
+          log_id,
+          CASE
+            WHEN operation = 'login' AND result = 'failed' THEN 'failed_login'
+            WHEN operation IN ('create_user', 'delete_user', 'update_user') THEN 'privilege_operation'
+            WHEN operation LIKE '%export%' THEN 'data_export'
+            WHEN user_id = 0 OR user_id IS NULL THEN 'unauthorized_access'
+            ELSE 'other'
+          END as event_type,
+          CONCAT(operation, ' - ', COALESCE(error_message, 'Success')) as description,
+          ip_address,
+          user_agent,
+          CASE
+            WHEN operation = 'login' AND result = 'failed' AND
+                 (SELECT COUNT(*) FROM operation_log ol2
+                  WHERE ol2.ip_address = operation_log.ip_address
+                  AND ol2.operation = 'login'
+                  AND ol2.result = 'failed'
+                  AND ol2.created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)) > 5
+            THEN 'high'
+            WHEN operation IN ('delete_user', 'delete_config') THEN 'medium'
+            WHEN operation LIKE '%export%' THEN 'medium'
+            ELSE 'low'
+          END as risk_level,
+          created_at
+        FROM operation_log
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        AND (
+          (operation = 'login' AND result = 'failed') OR
+          operation IN ('create_user', 'delete_user', 'update_user', 'create_config', 'delete_config') OR
+          operation LIKE '%export%' OR
+          user_id = 0 OR user_id IS NULL
+        )
+        ORDER BY created_at DESC
+        LIMIT 100
+      `;
+
+      const eventsResult = await app.mysql.query(securityEventsSql);
+
+      return {
+        stats: {
+          failedLogins: stats.failed_logins,
+          suspiciousIPs: stats.suspicious_ips,
+          privilegeOperations: stats.privilege_operations,
+          dataExports: stats.data_exports
+        },
+        events: eventsResult
+      };
+
+    } catch (error) {
+      this.logger.error('获取安全审计数据失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 导出安全审计报告
+   * @returns {object} 导出结果
+   */
+  async exportSecurityReport() {
+    const { app } = this;
+
+    try {
+      const auditData = await this.getSecurityAuditData();
+
+      // 构建Excel数据
+      const workbook = new app.excel.Workbook();
+
+      // 安全统计工作表
+      const statsSheet = workbook.addWorksheet('安全统计');
+      statsSheet.columns = [
+        { header: '统计项目', key: 'item', width: 20 },
+        { header: '数量', key: 'count', width: 15 },
+        { header: '说明', key: 'description', width: 40 }
+      ];
+
+      statsSheet.addRows([
+        { item: '登录失败次数', count: auditData.stats.failedLogins, description: '最近30天内的登录失败次数' },
+        { item: '可疑IP数量', count: auditData.stats.suspiciousIPs, description: '产生登录失败的不同IP地址数量' },
+        { item: '权限操作次数', count: auditData.stats.privilegeOperations, description: '用户管理、配置管理等敏感操作次数' },
+        { item: '数据导出次数', count: auditData.stats.dataExports, description: '各类数据导出操作次数' }
+      ]);
+
+      // 安全事件工作表
+      const eventsSheet = workbook.addWorksheet('安全事件');
+      eventsSheet.columns = [
+        { header: '事件类型', key: 'event_type', width: 15 },
+        { header: '描述', key: 'description', width: 40 },
+        { header: 'IP地址', key: 'ip_address', width: 15 },
+        { header: '风险等级', key: 'risk_level', width: 10 },
+        { header: '发生时间', key: 'created_at', width: 20 }
+      ];
+
+      eventsSheet.addRows(auditData.events.map(event => ({
+        event_type: this.getSecurityEventText(event.event_type),
+        description: event.description,
+        ip_address: event.ip_address,
+        risk_level: this.getRiskLevelText(event.risk_level),
+        created_at: event.created_at
+      })));
+
+      // 生成文件
+      const buffer = await workbook.xlsx.writeBuffer();
+      const filename = `安全审计报告_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      return {
+        success: true,
+        data: buffer,
+        filename: filename,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      };
+
+    } catch (error) {
+      this.logger.error('导出安全审计报告失败:', error);
+      return {
+        success: false,
+        message: '导出失败：' + error.message
+      };
+    }
+  }
+
+  /**
+   * 获取安全事件文本
+   * @param {string} eventType - 事件类型
+   * @returns {string} 事件文本
+   */
+  getSecurityEventText(eventType) {
+    const textMap = {
+      'failed_login': '登录失败',
+      'suspicious_ip': '可疑IP',
+      'privilege_operation': '权限操作',
+      'data_export': '数据导出',
+      'unauthorized_access': '未授权访问'
+    };
+    return textMap[eventType] || eventType;
+  }
+
+  /**
+   * 获取风险等级文本
+   * @param {string} riskLevel - 风险等级
+   * @returns {string} 风险等级文本
+   */
+  getRiskLevelText(riskLevel) {
+    const textMap = {
+      'low': '低',
+      'medium': '中',
+      'high': '高',
+      'critical': '严重'
+    };
+    return textMap[riskLevel] || riskLevel;
   }
 }
 

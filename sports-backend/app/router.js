@@ -73,6 +73,8 @@ module.exports = app => {
   router.get('/api/admin/operation-logs/user/:userId', app.middleware.auth(), controller.operationLog.getUserOperationHistory);
   router.get('/api/admin/operation-logs/operations', app.middleware.auth(), controller.operationLog.getOperationTypes);
   router.get('/api/admin/operation-logs/targets', app.middleware.auth(), controller.operationLog.getTargetTypes);
+  router.get('/api/admin/operation-logs/security-audit', app.middleware.auth(), controller.operationLog.getSecurityAudit);
+  router.get('/api/admin/operation-logs/export-security-report', app.middleware.auth(), controller.operationLog.exportSecurityReport);
 
   // 管理员端裁判员管理API（临时移除认证，用于测试）
   // 注意：具体路径必须放在参数路径之前，避免路由匹配冲突

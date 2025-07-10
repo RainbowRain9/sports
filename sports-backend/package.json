@@ -12,6 +12,7 @@
     "egg-cors": "^2.2.3",
     "egg-mysql": "^3.0.0",
     "egg-scripts": "^2.11.0",
+    "exceljs": "^4.4.0",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.5",
     "uuid": "^10.0.0"

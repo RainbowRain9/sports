@@ -219,17 +219,29 @@ export default {
       },
       
       // 选中的通知
-      selectedNotifications: []
+      selectedNotifications: [],
+
+      // 定时器
+      unreadCountTimer: null
     };
   },
   
   async created() {
+    // 检查用户是否已登录
+    if (!this.$store.getters['auth/isLoggedIn']) {
+      this.$message.error('请先登录');
+      this.$router.push('/');
+      return;
+    }
+
     await this.loadData();
     await this.loadUnreadCount();
-    
+
     // 定时刷新未读数量
     this.unreadCountTimer = setInterval(() => {
-      this.loadUnreadCount();
+      if (this.$store.getters['auth/isLoggedIn']) {
+        this.loadUnreadCount();
+      }
     }, 30000); // 30秒刷新一次
   },
   
@@ -251,15 +263,15 @@ export default {
         };
         
         const response = await this.$http.get('/api/notifications', { params });
-        if (response.data.success) {
-          this.notifications = response.data.data.list;
-          this.pagination.total = response.data.data.total;
+        if (response.success) {
+          this.notifications = response.data.list || [];
+          this.pagination.total = response.data.total || 0;
         } else {
-          this.$message.error(response.data.message || '获取通知失败');
+          this.$message.error(response.message || '获取通知失败');
         }
       } catch (error) {
         console.error('加载通知数据失败:', error);
-        this.$message.error('加载数据失败，请稍后重试');
+        this.handleApiError(error);
       } finally {
         this.loading = false;
       }
@@ -269,8 +281,8 @@ export default {
     async loadUnreadCount() {
       try {
         const response = await this.$http.get('/api/notifications/unread-count');
-        if (response.data.success) {
-          this.unreadCount = response.data.data.count;
+        if (response.success) {
+          this.unreadCount = response.data.count || 0;
         }
       } catch (error) {
         console.error('获取未读数量失败:', error);
@@ -300,6 +312,30 @@ export default {
       this.pagination.page = 1;
       await this.loadData();
     },
+
+    // 处理选择变化
+    handleSelectionChange(selection) {
+      this.selectedNotifications = selection;
+    },
+
+    // 处理行点击
+    handleRowClick(row) {
+      if (row.status === 0) {
+        this.markAsRead(row);
+      }
+    },
+
+    // 分页处理
+    handleSizeChange(val) {
+      this.pagination.pageSize = val;
+      this.pagination.page = 1;
+      this.loadData();
+    },
+
+    handleCurrentChange(val) {
+      this.pagination.page = val;
+      this.loadData();
+    },
     
     // 标记单个通知为已读
     async markAsRead(notification) {
@@ -307,12 +343,12 @@ export default {
       
       try {
         const response = await this.$http.put(`/api/notifications/${notification.notification_id}/read`);
-        if (response.data.success) {
+        if (response.success) {
           notification.status = 1;
           notification.read_time = new Date().toISOString();
           this.unreadCount = Math.max(0, this.unreadCount - 1);
         } else {
-          this.$message.error(response.data.message || '标记失败');
+          this.$message.error(response.message || '标记失败');
         }
       } catch (error) {
         console.error('标记已读失败:', error);
@@ -328,12 +364,12 @@ export default {
         });
         
         const response = await this.$http.put('/api/notifications/mark-all-read');
-        if (response.data.success) {
-          this.$message.success(`成功标记 ${response.data.data.count} 个通知为已读`);
+        if (response.success) {
+          this.$message.success(`成功标记 ${response.data.count || 0} 个通知为已读`);
           await this.loadData();
           await this.loadUnreadCount();
         } else {
-          this.$message.error(response.data.message || '操作失败');
+          this.$message.error(response.message || '操作失败');
         }
       } catch (error) {
         if (error !== 'cancel') {
@@ -351,14 +387,14 @@ export default {
         });
         
         const response = await this.$http.delete(`/api/notifications/${notification.notification_id}`);
-        if (response.data.success) {
+        if (response.success) {
           this.$message.success('删除成功');
           await this.loadData();
           if (notification.status === 0) {
             this.unreadCount = Math.max(0, this.unreadCount - 1);
           }
         } else {
-          this.$message.error(response.data.message || '删除失败');
+          this.$message.error(response.message || '删除失败');
         }
       } catch (error) {
         if (error !== 'cancel') {
@@ -434,6 +470,52 @@ export default {
         3: '紧急'
       };
       return textMap[priority] || '普通';
+    },
+
+    // 格式化日期时间
+    formatDateTime(dateTime) {
+      if (!dateTime) return '-';
+      return new Date(dateTime).toLocaleString('zh-CN');
+    },
+
+    // 截断内容
+    truncateContent(content, maxLength = 100) {
+      if (!content) return '';
+      return content.length > maxLength ? content.substring(0, maxLength) + '...' : content;
+    },
+
+    // 查看通知详情
+    viewNotification(notification) {
+      // 如果是未读状态，标记为已读
+      if (notification.status === 0) {
+        this.markAsRead(notification);
+      }
+
+      // 显示通知详情对话框
+      this.$alert(notification.content, notification.title, {
+        confirmButtonText: '确定',
+        type: 'info'
+      });
+    },
+
+    // 统一的API错误处理
+    handleApiError(error) {
+      if (error.response) {
+        const status = error.response.status;
+        if (status === 401) {
+          this.$message.error('登录已过期，请重新登录');
+          this.$store.dispatch('auth/logout');
+          this.$router.push('/');
+        } else if (status === 403) {
+          this.$message.error('权限不足');
+        } else if (status === 500) {
+          this.$message.error('服务器错误，请稍后重试');
+        } else {
+          this.$message.error('操作失败，请稍后重试');
+        }
+      } else {
+        this.$message.error('网络错误，请检查网络连接');
+      }
     }
   }
 };

@@ -72,6 +72,12 @@
           <el-menu-item index="/notifications">
             <i class="el-icon-bell"></i>
             <span slot="title">通知中心</span>
+            <el-badge
+              v-if="unreadCount > 0"
+              :value="unreadCount"
+              :max="99"
+              class="notification-badge"
+            />
           </el-menu-item>
           <el-menu-item index="/operation-logs">
             <i class="el-icon-document-copy"></i>
@@ -183,13 +189,31 @@ export default {
       }
       // 兼容旧系统
       return this.$store.state.userName || '用户';
+    },
+
+    // 获取未读通知数量
+    unreadCount() {
+      return this.$store.getters['notification/unreadCount'];
     }
   },
-  created() {
+  async created() {
     // 检查用户是否已登录
     if (!this.$store.getters['auth/isLoggedIn'] && this.$store.state.userName === '') {
       this.$router.push('/');
+      return;
     }
+
+    // 等待一小段时间确保认证状态稳定，然后初始化通知模块
+    this.$nextTick(async () => {
+      if (this.$store.getters['auth/isLoggedIn']) {
+        await this.$store.dispatch('notification/initNotifications');
+      }
+    });
+  },
+
+  beforeDestroy() {
+    // 清理通知模块
+    this.$store.dispatch('notification/stopAutoRefresh');
   },
   methods: {
     handleOpen() {
@@ -258,4 +282,14 @@ export default {
 .el-menu
   border 0px
   background #EBEEF5
+
+/* 通知徽章样式 */
+.notification-badge
+  position absolute
+  top 8px
+  right 8px
+
+.notification-badge .el-badge__content
+  background-color #f56c6c
+  border 1px solid #fff
 </style>

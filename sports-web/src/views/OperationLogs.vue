@@ -18,13 +18,21 @@
         >
           导出日志
         </el-button>
-        <el-button 
-          type="danger" 
-          icon="el-icon-delete" 
+        <el-button
+          type="danger"
+          icon="el-icon-delete"
           @click="showCleanupDialog"
-          v-if="$store.getters['auth/userType'] === 'admin'"
+          v-if="isSuperAdmin"
         >
           清理日志
+        </el-button>
+        <el-button
+          type="warning"
+          icon="el-icon-warning"
+          @click="showSecurityAudit"
+          v-if="isSuperAdmin"
+        >
+          安全审计
         </el-button>
         <el-button 
           type="success" 
@@ -78,6 +86,46 @@
         </el-col>
       </el-row>
     </div>
+
+    <!-- 图表展示 -->
+    <el-row :gutter="20" class="charts-row" v-if="stats">
+      <el-col :span="12">
+        <el-card class="chart-card">
+          <div slot="header" class="chart-header">
+            <span>操作趋势</span>
+            <el-button type="text" @click="refreshCharts">刷新</el-button>
+          </div>
+          <div id="operationTrendChart" style="height: 300px;"></div>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card class="chart-card">
+          <div slot="header" class="chart-header">
+            <span>操作类型分布</span>
+          </div>
+          <div id="operationTypeChart" style="height: 300px;"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="20" class="charts-row" v-if="stats">
+      <el-col :span="12">
+        <el-card class="chart-card">
+          <div slot="header" class="chart-header">
+            <span>用户活跃度</span>
+          </div>
+          <div id="userActivityChart" style="height: 300px;"></div>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card class="chart-card">
+          <div slot="header" class="chart-header">
+            <span>操作结果统计</span>
+          </div>
+          <div id="operationResultChart" style="height: 300px;"></div>
+        </el-card>
+      </el-col>
+    </el-row>
 
     <!-- 筛选条件 -->
     <el-card class="filter-card">
@@ -355,16 +403,118 @@
         </el-button>
       </span>
     </el-dialog>
+
+    <!-- 安全审计对话框 -->
+    <el-dialog
+      title="安全审计报告"
+      :visible.sync="securityAuditDialog.visible"
+      width="80%"
+      top="5vh"
+    >
+      <div v-loading="securityAuditDialog.loading">
+        <!-- 安全统计 -->
+        <el-row :gutter="20" class="security-stats">
+          <el-col :span="6">
+            <el-card class="stat-card danger">
+              <div class="stat-content">
+                <div class="stat-number">{{ securityStats.failedLogins || 0 }}</div>
+                <div class="stat-label">登录失败</div>
+              </div>
+              <i class="el-icon-warning stat-icon"></i>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="stat-card warning">
+              <div class="stat-content">
+                <div class="stat-number">{{ securityStats.suspiciousIPs || 0 }}</div>
+                <div class="stat-label">可疑IP</div>
+              </div>
+              <i class="el-icon-location stat-icon"></i>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="stat-card info">
+              <div class="stat-content">
+                <div class="stat-number">{{ securityStats.privilegeOperations || 0 }}</div>
+                <div class="stat-label">权限操作</div>
+              </div>
+              <i class="el-icon-key stat-icon"></i>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="stat-card success">
+              <div class="stat-content">
+                <div class="stat-number">{{ securityStats.dataExports || 0 }}</div>
+                <div class="stat-label">数据导出</div>
+              </div>
+              <i class="el-icon-download stat-icon"></i>
+            </el-card>
+          </el-col>
+        </el-row>
+
+        <!-- 安全事件列表 -->
+        <el-card class="security-events-card">
+          <div slot="header" class="card-header">
+            <span>安全事件</span>
+            <el-button type="text" @click="refreshSecurityAudit">刷新</el-button>
+          </div>
+
+          <el-table :data="securityEvents" style="width: 100%">
+            <el-table-column prop="event_type" label="事件类型" width="120">
+              <template slot-scope="scope">
+                <el-tag :type="getSecurityEventType(scope.row.event_type)">
+                  {{ getSecurityEventText(scope.row.event_type) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="description" label="描述" min-width="200"></el-table-column>
+            <el-table-column prop="ip_address" label="IP地址" width="140"></el-table-column>
+            <el-table-column prop="user_agent" label="用户代理" min-width="200" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="risk_level" label="风险等级" width="100">
+              <template slot-scope="scope">
+                <el-tag :type="getRiskLevelType(scope.row.risk_level)">
+                  {{ getRiskLevelText(scope.row.risk_level) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="created_at" label="时间" width="160">
+              <template slot-scope="scope">
+                {{ formatDateTime(scope.row.created_at) }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </div>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="securityAuditDialog.visible = false">关闭</el-button>
+        <el-button type="primary" @click="exportSecurityReport">导出报告</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
+import * as echarts from 'echarts';
 
 export default {
   name: 'OperationLogs',
   computed: {
-    ...mapGetters(['userInfo'])
+    ...mapGetters(['userInfo']),
+
+    // 是否为超级管理员
+    isSuperAdmin() {
+      const user = this.$store.getters['auth/user'];
+      return user && user.userType === 'admin' && user.roleSubType === '2';
+    },
+
+    // 是否为普通管理员
+    isRegularAdmin() {
+      const user = this.$store.getters['auth/user'];
+      return user && (user.userType === 'operator' ||
+        (user.userType === 'admin' && user.roleSubType !== '2'));
+    }
   },
   data() {
     return {
@@ -424,7 +574,27 @@ export default {
       // 清理表单
       cleanupForm: {
         retentionDays: 90
-      }
+      },
+
+      // 图表实例
+      charts: {
+        operationTrend: null,
+        operationType: null,
+        userActivity: null,
+        operationResult: null
+      },
+
+      // 安全审计对话框
+      securityAuditDialog: {
+        visible: false,
+        loading: false
+      },
+
+      // 安全统计数据
+      securityStats: {},
+
+      // 安全事件列表
+      securityEvents: []
     };
   },
 
@@ -434,20 +604,38 @@ export default {
     await this.loadData();
   },
 
+  mounted() {
+    // 图表将在数据加载完成后初始化
+    console.log('OperationLogs component mounted');
+    // 延迟初始化图表，确保DOM已渲染
+    setTimeout(() => {
+      this.initCharts();
+    }, 1000);
+  },
+
+  beforeDestroy() {
+    // 销毁图表实例
+    Object.values(this.charts).forEach(chart => {
+      if (chart) {
+        chart.dispose();
+      }
+    });
+  },
+
   methods: {
     // 加载元数据
     async loadMetadata() {
       try {
         // 加载操作类型
         const operationResponse = await this.$http.get('/api/admin/operation-logs/operations');
-        if (operationResponse.data.success) {
-          this.operationTypes = operationResponse.data.data;
+        if (operationResponse.success) {
+          this.operationTypes = operationResponse.data || [];
         }
 
         // 加载目标类型
         const targetResponse = await this.$http.get('/api/admin/operation-logs/targets');
-        if (targetResponse.data.success) {
-          this.targetTypes = targetResponse.data.data;
+        if (targetResponse.success) {
+          this.targetTypes = targetResponse.data || [];
         }
       } catch (error) {
         console.error('加载元数据失败:', error);
@@ -463,8 +651,14 @@ export default {
         }
 
         const response = await this.$http.get('/api/admin/operation-logs/stats', { params });
-        if (response.data.success) {
-          this.stats = response.data.data;
+        if (response.success) {
+          this.stats = response.data || {};
+          console.log('Stats data loaded:', this.stats); // 调试信息
+          // 更新图表
+          this.$nextTick(() => {
+            this.initChartsIfNeeded();
+            this.refreshCharts();
+          });
         }
       } catch (error) {
         console.error('加载统计数据失败:', error);
@@ -482,11 +676,11 @@ export default {
         };
 
         const response = await this.$http.get('/api/admin/operation-logs', { params });
-        if (response.data.success) {
-          this.tableData = response.data.data.list;
-          this.pagination.total = response.data.data.total;
+        if (response.success) {
+          this.tableData = response.data.list || [];
+          this.pagination.total = response.data.total || 0;
         } else {
-          this.$message.error(response.data.message || '获取数据失败');
+          this.$message.error(response.message || '获取数据失败');
         }
       } catch (error) {
         console.error('加载日志数据失败:', error);
@@ -555,10 +749,10 @@ export default {
           params: { userType: log.user_type, limit: 50 }
         });
 
-        if (response.data.success) {
-          this.historyDialog.data = response.data.data;
+        if (response.success) {
+          this.historyDialog.data = response.data || [];
         } else {
-          this.$message.error(response.data.message || '获取用户历史失败');
+          this.$message.error(response.message || '获取用户历史失败');
         }
       } catch (error) {
         console.error('获取用户历史失败:', error);
@@ -620,13 +814,13 @@ export default {
           data: { retentionDays: this.cleanupForm.retentionDays }
         });
 
-        if (response.data.success) {
-          this.$message.success(response.data.message);
+        if (response.success) {
+          this.$message.success(response.message || '清理完成');
           this.cleanupDialog.visible = false;
           await this.loadStats();
           await this.loadData();
         } else {
-          this.$message.error(response.data.message || '清理失败');
+          this.$message.error(response.message || '清理失败');
         }
       } catch (error) {
         if (error !== 'cancel') {
@@ -713,6 +907,436 @@ export default {
         system_notification: '系统通知'
       };
       return textMap[targetType] || targetType;
+    },
+
+    // 初始化图表
+    initCharts() {
+      this.initOperationTrendChart();
+      this.initOperationTypeChart();
+      this.initUserActivityChart();
+      this.initOperationResultChart();
+    },
+
+    // 如果需要则初始化图表
+    initChartsIfNeeded() {
+      if (!this.charts.operationTrend) {
+        this.initOperationTrendChart();
+      }
+      if (!this.charts.operationType) {
+        this.initOperationTypeChart();
+      }
+      if (!this.charts.userActivity) {
+        this.initUserActivityChart();
+      }
+      if (!this.charts.operationResult) {
+        this.initOperationResultChart();
+      }
+    },
+
+    // 初始化操作趋势图表
+    initOperationTrendChart() {
+      const chartDom = document.getElementById('operationTrendChart');
+      if (!chartDom) {
+        console.warn('operationTrendChart DOM element not found');
+        return;
+      }
+
+      if (!this.charts.operationTrend) {
+        this.charts.operationTrend = echarts.init(chartDom);
+        console.log('operationTrend chart initialized');
+      }
+      this.updateOperationTrendChart();
+    },
+
+    // 初始化操作类型分布图表
+    initOperationTypeChart() {
+      const chartDom = document.getElementById('operationTypeChart');
+      if (!chartDom) {
+        console.warn('operationTypeChart DOM element not found');
+        return;
+      }
+
+      if (!this.charts.operationType) {
+        this.charts.operationType = echarts.init(chartDom);
+        console.log('operationType chart initialized');
+      }
+      this.updateOperationTypeChart();
+    },
+
+    // 初始化用户活跃度图表
+    initUserActivityChart() {
+      const chartDom = document.getElementById('userActivityChart');
+      if (!chartDom) return;
+
+      this.charts.userActivity = echarts.init(chartDom);
+      this.updateUserActivityChart();
+    },
+
+    // 初始化操作结果统计图表
+    initOperationResultChart() {
+      const chartDom = document.getElementById('operationResultChart');
+      if (!chartDom) return;
+
+      this.charts.operationResult = echarts.init(chartDom);
+      this.updateOperationResultChart();
+    },
+
+    // 更新操作趋势图表
+    updateOperationTrendChart() {
+      console.log('updateOperationTrendChart called');
+      console.log('Chart instance:', this.charts.operationTrend);
+      console.log('Stats data:', this.stats);
+
+      if (!this.charts.operationTrend) {
+        console.log('operationTrend chart instance not found');
+        return;
+      }
+
+      if (!this.stats || !this.stats.trend || this.stats.trend.length === 0) {
+        console.log('No trend data available, showing empty chart');
+        // 显示空数据的图表
+        const emptyOption = {
+          title: { text: '操作趋势 (暂无数据)', textStyle: { fontSize: 14 } },
+          xAxis: { type: 'category', data: [] },
+          yAxis: { type: 'value' },
+          series: [
+            { name: '成功操作', type: 'line', data: [] },
+            { name: '失败操作', type: 'line', data: [] }
+          ]
+        };
+        this.charts.operationTrend.setOption(emptyOption);
+        return;
+      }
+
+      console.log('Updating operationTrend chart with data:', this.stats.trend);
+
+      const option = {
+        title: {
+          text: '最近7天操作趋势',
+          textStyle: { fontSize: 14 }
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'cross' }
+        },
+        legend: {
+          data: ['成功操作', '失败操作']
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: this.stats.trend.map(item => item.date)
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            name: '成功操作',
+            type: 'line',
+            smooth: true,
+            data: this.stats.trend.map(item => item.success_count),
+            itemStyle: { color: '#67C23A' }
+          },
+          {
+            name: '失败操作',
+            type: 'line',
+            smooth: true,
+            data: this.stats.trend.map(item => item.failed_count),
+            itemStyle: { color: '#F56C6C' }
+          }
+        ]
+      };
+
+      this.charts.operationTrend.setOption(option);
+    },
+
+    // 更新操作类型分布图表
+    updateOperationTypeChart() {
+      console.log('updateOperationTypeChart called');
+
+      if (!this.charts.operationType) {
+        console.log('operationType chart instance not found');
+        return;
+      }
+
+      if (!this.stats || !this.stats.operation_types || this.stats.operation_types.length === 0) {
+        console.log('No operation_types data available');
+        const emptyOption = {
+          title: { text: '操作类型分布 (暂无数据)', textStyle: { fontSize: 14 } },
+          series: [{ name: '操作类型', type: 'pie', data: [] }]
+        };
+        this.charts.operationType.setOption(emptyOption);
+        return;
+      }
+
+      const data = this.stats.operation_types.map(item => ({
+        name: this.getOperationText(item.operation),
+        value: item.count
+      }));
+
+      console.log('Operation type chart data:', data);
+
+      const option = {
+        title: {
+          text: '操作类型分布',
+          textStyle: { fontSize: 14 }
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left'
+        },
+        series: [
+          {
+            name: '操作类型',
+            type: 'pie',
+            radius: '50%',
+            data,
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
+      };
+
+      this.charts.operationType.setOption(option);
+    },
+
+    // 更新用户活跃度图表
+    updateUserActivityChart() {
+      if (!this.charts.userActivity || !this.stats || !this.stats.user_activity) return;
+
+      const option = {
+        title: {
+          text: '用户活跃度',
+          textStyle: { fontSize: 14 }
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: ['管理员', '操作员', '运动员', '裁判员']
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            name: '操作次数',
+            type: 'bar',
+            data: [
+              (this.stats.user_activity && this.stats.user_activity.admin) || 0,
+              (this.stats.user_activity && this.stats.user_activity.operator) || 0,
+              (this.stats.user_activity && this.stats.user_activity.player) || 0,
+              (this.stats.user_activity && this.stats.user_activity.judge) || 0
+            ],
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#83bff6' },
+                { offset: 0.5, color: '#188df0' },
+                { offset: 1, color: '#188df0' }
+              ])
+            }
+          }
+        ]
+      };
+
+      this.charts.userActivity.setOption(option);
+    },
+
+    // 更新操作结果统计图表
+    updateOperationResultChart() {
+      if (!this.charts.operationResult || !this.stats || !this.stats.basic) return;
+
+      const data = [
+        { name: '成功', value: this.stats.basic.success_count, itemStyle: { color: '#67C23A' } },
+        { name: '失败', value: this.stats.basic.failed_count, itemStyle: { color: '#F56C6C' } }
+      ];
+
+      const option = {
+        title: {
+          text: '操作结果统计',
+          textStyle: { fontSize: 14 }
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        series: [
+          {
+            name: '操作结果',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            label: {
+              show: false,
+              position: 'center'
+            },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: '30',
+                fontWeight: 'bold'
+              }
+            },
+            labelLine: {
+              show: false
+            },
+            data
+          }
+        ]
+      };
+
+      this.charts.operationResult.setOption(option);
+    },
+
+    // 刷新图表
+    refreshCharts() {
+      this.$nextTick(() => {
+        this.updateOperationTrendChart();
+        this.updateOperationTypeChart();
+        this.updateUserActivityChart();
+        this.updateOperationResultChart();
+      });
+    },
+
+    // 显示安全审计对话框
+    async showSecurityAudit() {
+      this.securityAuditDialog.visible = true;
+      await this.loadSecurityAudit();
+    },
+
+    // 加载安全审计数据
+    async loadSecurityAudit() {
+      this.securityAuditDialog.loading = true;
+      try {
+        const response = await this.$http.get('/api/admin/operation-logs/security-audit');
+        if (response.success) {
+          this.securityStats = response.data.stats || {};
+          this.securityEvents = response.data.events || [];
+        } else {
+          this.$message.error(response.message || '获取安全审计数据失败');
+        }
+      } catch (error) {
+        console.error('加载安全审计数据失败:', error);
+        this.handleApiError(error);
+      } finally {
+        this.securityAuditDialog.loading = false;
+      }
+    },
+
+    // 刷新安全审计
+    async refreshSecurityAudit() {
+      await this.loadSecurityAudit();
+    },
+
+    // 导出安全报告
+    async exportSecurityReport() {
+      try {
+        const response = await this.$http.get('/api/admin/operation-logs/export-security-report', {
+          responseType: 'blob'
+        });
+
+        const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `安全审计报告_${new Date().toISOString().split('T')[0]}.xlsx`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+
+        this.$message.success('安全报告导出成功');
+      } catch (error) {
+        console.error('导出安全报告失败:', error);
+        this.$message.error('导出失败，请稍后重试');
+      }
+    },
+
+    // 获取安全事件类型
+    getSecurityEventType(eventType) {
+      const typeMap = {
+        failed_login: 'danger',
+        suspicious_ip: 'warning',
+        privilege_operation: 'info',
+        data_export: 'success',
+        unauthorized_access: 'danger'
+      };
+      return typeMap[eventType] || 'info';
+    },
+
+    // 获取安全事件文本
+    getSecurityEventText(eventType) {
+      const textMap = {
+        failed_login: '登录失败',
+        suspicious_ip: '可疑IP',
+        privilege_operation: '权限操作',
+        data_export: '数据导出',
+        unauthorized_access: '未授权访问'
+      };
+      return textMap[eventType] || eventType;
+    },
+
+    // 获取风险等级类型
+    getRiskLevelType(riskLevel) {
+      const typeMap = {
+        low: 'success',
+        medium: 'warning',
+        high: 'danger',
+        critical: 'danger'
+      };
+      return typeMap[riskLevel] || 'info';
+    },
+
+    // 获取风险等级文本
+    getRiskLevelText(riskLevel) {
+      const textMap = {
+        low: '低',
+        medium: '中',
+        high: '高',
+        critical: '严重'
+      };
+      return textMap[riskLevel] || riskLevel;
+    },
+
+    // 统一的API错误处理
+    handleApiError(error) {
+      if (error.response) {
+        const { status } = error.response;
+        if (status === 401) {
+          this.$message.error('登录已过期，请重新登录');
+          this.$store.dispatch('auth/logout');
+          this.$router.push('/');
+        } else if (status === 403) {
+          this.$message.error('权限不足');
+        } else if (status === 500) {
+          this.$message.error('服务器错误，请稍后重试');
+        } else {
+          this.$message.error('操作失败，请稍后重试');
+        }
+      } else {
+        this.$message.error('网络错误，请检查网络连接');
+      }
     }
   }
 };
@@ -805,6 +1429,23 @@ export default {
   opacity: 0.3;
 }
 
+/* 图表行 */
+.charts-row {
+  margin-bottom: 20px;
+}
+
+.chart-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
 /* 筛选卡片 */
 .filter-card {
   margin-bottom: 20px;
@@ -886,6 +1527,23 @@ export default {
   font-size: 12px;
   color: #909399;
   margin-top: 5px;
+}
+
+/* 安全审计样式 */
+.security-stats {
+  margin-bottom: 20px;
+}
+
+.security-events-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
 }
 
 /* 响应式设计 */

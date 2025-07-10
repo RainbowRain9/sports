@@ -63,7 +63,18 @@
             <i class="el-icon-trophy"></i>
             <span slot="title">我的成绩</span>
           </el-menu-item>
-          
+
+          <el-menu-item index="/player/notifications">
+            <i class="el-icon-bell"></i>
+            <span slot="title">通知中心</span>
+            <el-badge
+              v-if="unreadCount > 0"
+              :value="unreadCount"
+              :max="99"
+              class="notification-badge"
+            />
+          </el-menu-item>
+
           <el-menu-item index="/player/profile">
             <i class="el-icon-user"></i>
             <span slot="title">个人信息</span>
@@ -114,25 +125,44 @@ export default {
         '/player/profile': { name: '个人信息', path: '/player/profile' },
         '/player/registration': { name: '项目报名', path: '/player/registration' },
         '/player/my-registrations': { name: '我的报名', path: '/player/my-registrations' },
-        '/player/scores': { name: '我的成绩', path: '/player/scores' }
+        '/player/scores': { name: '我的成绩', path: '/player/scores' },
+        '/player/notifications': { name: '通知中心', path: '/player/notifications' }
       };
-      
+
       const currentRoute = routeMap[this.$route.path];
       return currentRoute ? [currentRoute] : [];
+    },
+
+    // 获取未读通知数量
+    unreadCount() {
+      return this.$store.getters['notification/unreadCount'];
     }
   },
-  created() {
+
+  async created() {
     // 检查用户权限
     if (!this.$isPlayer()) {
       this.$message.error('权限不足，请使用运动员账号登录');
       this.$router.push('/');
       return;
     }
-    
+
     // 如果当前路径是根路径，重定向到个人中心
     if (this.$route.path === '/player') {
       this.$router.replace('/player-home');
     }
+
+    // 等待一小段时间确保认证状态稳定，然后初始化通知模块
+    this.$nextTick(async () => {
+      if (this.$store.getters['auth/isLoggedIn']) {
+        await this.$store.dispatch('notification/initNotifications');
+      }
+    });
+  },
+
+  beforeDestroy() {
+    // 清理通知模块
+    this.$store.dispatch('notification/stopAutoRefresh');
   },
   methods: {
     handleCommand(command) {
@@ -284,5 +314,17 @@ export default {
   .user-name {
     display: none;
   }
+}
+
+/* 通知徽章样式 */
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.notification-badge .el-badge__content {
+  background-color: #f56c6c;
+  border: 1px solid #fff;
 }
 </style>
