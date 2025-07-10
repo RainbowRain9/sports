@@ -10,17 +10,37 @@
         <p class="page-description">管理系统运行参数和配置项</p>
       </div>
       <div class="header-actions">
-        <el-button 
-          type="primary" 
-          icon="el-icon-plus" 
+        <el-dropdown @command="handleAdvancedAction" v-if="userType === 'admin'">
+          <el-button type="info" icon="el-icon-more">
+            高级功能<i class="el-icon-arrow-down el-icon--right"></i>
+          </el-button>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="export">
+              <i class="el-icon-download"></i> 导出配置
+            </el-dropdown-item>
+            <el-dropdown-item command="import">
+              <i class="el-icon-upload2"></i> 导入配置
+            </el-dropdown-item>
+            <el-dropdown-item command="backup">
+              <i class="el-icon-folder-opened"></i> 备份配置
+            </el-dropdown-item>
+            <el-dropdown-item command="restore">
+              <i class="el-icon-refresh-left"></i> 恢复配置
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+
+        <el-button
+          type="primary"
+          icon="el-icon-plus"
           @click="showCreateDialog"
-          v-if="userInfo.userType === 'admin'"
+          v-if="userType === 'admin'"
         >
           新增配置
         </el-button>
-        <el-button 
-          type="success" 
-          icon="el-icon-refresh" 
+        <el-button
+          type="success"
+          icon="el-icon-refresh"
           @click="refreshData"
           :loading="loading"
         >
@@ -138,8 +158,8 @@
               >
                 详情
               </el-button>
-              <el-button 
-                v-if="userInfo.userType === 'admin' && !isProtectedConfig(scope.row.config_key)"
+              <el-button
+                v-if="userType === 'admin' && !isProtectedConfig(scope.row.config_key)"
                 type="text" 
                 size="mini" 
                 style="color: #f56c6c;"
@@ -286,6 +306,135 @@
         </el-descriptions>
       </div>
     </el-dialog>
+
+    <!-- 导入配置对话框 -->
+    <el-dialog
+      title="导入配置"
+      :visible.sync="importDialog.visible"
+      width="600px"
+    >
+      <div class="import-content">
+        <el-alert
+          title="导入说明"
+          type="info"
+          :closable="false"
+          show-icon
+        >
+          <p>支持导入JSON格式的配置文件，格式要求：</p>
+          <ul>
+            <li>必须包含 config_key、config_value、config_type 字段</li>
+            <li>如果配置键已存在，将会更新现有配置</li>
+            <li>导入前请确保配置数据的正确性</li>
+          </ul>
+        </el-alert>
+
+        <el-upload
+          class="upload-demo"
+          drag
+          :auto-upload="false"
+          :on-change="handleFileChange"
+          :file-list="importDialog.fileList"
+          accept=".json"
+        >
+          <i class="el-icon-upload"></i>
+          <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+          <div class="el-upload__tip" slot="tip">只能上传json文件</div>
+        </el-upload>
+
+        <div v-if="importDialog.previewData" class="preview-section">
+          <h4>预览数据 (前5条):</h4>
+          <el-table
+            :data="importDialog.previewData.slice(0, 5)"
+            size="mini"
+            border
+          >
+            <el-table-column prop="config_key" label="配置键" width="150"></el-table-column>
+            <el-table-column prop="config_value" label="配置值" width="150" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="config_type" label="类型" width="80"></el-table-column>
+            <el-table-column prop="description" label="描述" show-overflow-tooltip></el-table-column>
+          </el-table>
+          <p class="preview-info">共 {{ importDialog.previewData.length }} 条配置</p>
+        </div>
+      </div>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="importDialog.visible = false">取消</el-button>
+        <el-button
+          type="primary"
+          @click="confirmImport"
+          :loading="importDialog.loading"
+          :disabled="!importDialog.previewData"
+        >
+          确认导入
+        </el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 备份恢复对话框 -->
+    <el-dialog
+      title="恢复配置"
+      :visible.sync="restoreDialog.visible"
+      width="600px"
+    >
+      <div class="restore-content">
+        <el-alert
+          title="恢复说明"
+          type="warning"
+          :closable="false"
+          show-icon
+        >
+          <p>恢复配置将会：</p>
+          <ul>
+            <li>覆盖现有的同名配置项</li>
+            <li>添加备份中不存在的新配置项</li>
+            <li>此操作不可逆，请谨慎操作</li>
+          </ul>
+        </el-alert>
+
+        <el-upload
+          class="upload-demo"
+          drag
+          :auto-upload="false"
+          :on-change="handleBackupFileChange"
+          :file-list="restoreDialog.fileList"
+          accept=".json"
+        >
+          <i class="el-icon-upload"></i>
+          <div class="el-upload__text">将备份文件拖到此处，或<em>点击上传</em></div>
+          <div class="el-upload__tip" slot="tip">只能上传json格式的备份文件</div>
+        </el-upload>
+
+        <div v-if="restoreDialog.backupData" class="backup-info">
+          <h4>备份信息:</h4>
+          <el-descriptions :column="2" border size="mini">
+            <el-descriptions-item label="备份版本">
+              {{ restoreDialog.backupData.version }}
+            </el-descriptions-item>
+            <el-descriptions-item label="备份时间">
+              {{ formatDateTime(restoreDialog.backupData.timestamp) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="配置数量">
+              {{ restoreDialog.backupData.configs ? restoreDialog.backupData.configs.length : 0 }}
+            </el-descriptions-item>
+            <el-descriptions-item label="系统版本">
+              {{ restoreDialog.backupData.metadata ? restoreDialog.backupData.metadata.systemVersion : '未知' }}
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
+      </div>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="restoreDialog.visible = false">取消</el-button>
+        <el-button
+          type="danger"
+          @click="confirmRestore"
+          :loading="restoreDialog.loading"
+          :disabled="!restoreDialog.backupData"
+        >
+          确认恢复
+        </el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -295,7 +444,15 @@ import { mapGetters } from 'vuex';
 export default {
   name: 'SystemConfig',
   computed: {
-    ...mapGetters(['userInfo'])
+    // 获取用户信息
+    userInfo() {
+      return this.$store.getters['auth/user'] || {};
+    },
+
+    // 获取用户类型
+    userType() {
+      return this.$store.getters['auth/userType'];
+    }
   },
   data() {
     return {
@@ -355,6 +512,22 @@ export default {
         config: null
       },
 
+      // 导入对话框
+      importDialog: {
+        visible: false,
+        loading: false,
+        fileList: [],
+        previewData: null
+      },
+
+      // 恢复对话框
+      restoreDialog: {
+        visible: false,
+        loading: false,
+        fileList: [],
+        backupData: null
+      },
+
       // 受保护的配置键
       protectedConfigs: ['system.name', 'system.version']
     };
@@ -376,15 +549,31 @@ export default {
         };
 
         const response = await this.$http.get('/api/admin/system/config', { params });
-        if (response.data.success) {
-          this.tableData = response.data.data.list;
-          this.pagination.total = response.data.data.total;
+
+        if (response.success) {
+          this.tableData = response.data.list || [];
+          this.pagination.total = response.data.total || 0;
         } else {
-          this.$message.error(response.data.message || '获取数据失败');
+          this.$message.error(response.message || '获取数据失败');
         }
       } catch (error) {
         console.error('加载数据失败:', error);
-        this.$message.error('加载数据失败，请稍后重试');
+
+        // 处理不同类型的错误
+        if (error.response) {
+          const status = error.response.status;
+          if (status === 401) {
+            this.$message.error('登录已过期，请重新登录');
+            this.$store.dispatch('auth/logout');
+            this.$router.push('/');
+          } else if (status === 403) {
+            this.$message.error('权限不足，仅超级管理员可访问');
+          } else {
+            this.$message.error('服务器错误，请稍后重试');
+          }
+        } else {
+          this.$message.error('网络错误，请检查网络连接');
+        }
       } finally {
         this.loading = false;
       }
@@ -455,11 +644,11 @@ export default {
         });
 
         const response = await this.$http.delete(`/api/admin/system/config/${config.config_key}`);
-        if (response.data.success) {
+        if (response.success) {
           this.$message.success('配置删除成功');
           await this.loadData();
         } else {
-          this.$message.error(response.data.message || '删除失败');
+          this.$message.error(response.message || '删除失败');
         }
       } catch (error) {
         if (error !== 'cancel') {
@@ -493,12 +682,12 @@ export default {
           });
         }
 
-        if (response.data.success) {
+        if (response.success) {
           this.$message.success(`配置${this.configDialog.isEdit ? '更新' : '创建'}成功`);
           this.configDialog.visible = false;
           await this.loadData();
         } else {
-          this.$message.error(response.data.message || '操作失败');
+          this.$message.error(response.message || '操作失败');
         }
       } catch (error) {
         if (error !== 'validation') {
@@ -531,6 +720,7 @@ export default {
 
     // 验证配置值
     validateConfigValue(rule, value, callback) {
+      // eslint-disable-next-line no-unused-vars
       if (!value) {
         callback(new Error('请输入配置值'));
         return;
@@ -616,6 +806,198 @@ export default {
     // 检查是否为受保护配置
     isProtectedConfig(configKey) {
       return this.protectedConfigs.includes(configKey);
+    },
+
+    // 高级功能处理
+    handleAdvancedAction(command) {
+      switch (command) {
+        case 'export':
+          this.exportConfigs();
+          break;
+        case 'import':
+          this.showImportDialog();
+          break;
+        case 'backup':
+          this.backupConfigs();
+          break;
+        case 'restore':
+          this.showRestoreDialog();
+          break;
+      }
+    },
+
+    // 导出配置
+    async exportConfigs() {
+      try {
+        const params = {
+          configType: this.filterForm.configType,
+          isPublic: this.filterForm.isPublic
+        };
+
+        const response = await this.$http.get('/api/admin/system/config/export', { params });
+        if (response.success) {
+          // 创建下载链接
+          const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+            type: 'application/json'
+          });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = response.filename || 'system_config_export.json';
+          link.click();
+          window.URL.revokeObjectURL(url);
+
+          this.$message.success('配置导出成功');
+        } else {
+          this.$message.error(response.message || '导出失败');
+        }
+      } catch (error) {
+        console.error('导出配置失败:', error);
+        this.$message.error('导出失败，请稍后重试');
+      }
+    },
+
+    // 显示导入对话框
+    showImportDialog() {
+      this.importDialog.visible = true;
+      this.importDialog.fileList = [];
+      this.importDialog.previewData = null;
+    },
+
+    // 处理文件变化
+    handleFileChange(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data)) {
+            this.importDialog.previewData = data;
+          } else if (data.configs && Array.isArray(data.configs)) {
+            this.importDialog.previewData = data.configs;
+          } else {
+            this.$message.error('文件格式不正确，请上传有效的配置文件');
+            return;
+          }
+        } catch (error) {
+          this.$message.error('文件解析失败，请检查JSON格式');
+        }
+      };
+      reader.readAsText(file.raw);
+    },
+
+    // 确认导入
+    async confirmImport() {
+      if (!this.importDialog.previewData) {
+        this.$message.warning('请先选择要导入的文件');
+        return;
+      }
+
+      this.importDialog.loading = true;
+      try {
+        const response = await this.$http.post('/api/admin/system/config/batch-import', {
+          configs: this.importDialog.previewData
+        });
+
+        if (response.success) {
+          this.$message.success(response.message);
+          this.importDialog.visible = false;
+          await this.loadData();
+        } else {
+          this.$message.error(response.message || '导入失败');
+        }
+      } catch (error) {
+        console.error('导入配置失败:', error);
+        this.$message.error('导入失败，请稍后重试');
+      } finally {
+        this.importDialog.loading = false;
+      }
+    },
+
+    // 备份配置
+    async backupConfigs() {
+      try {
+        const response = await this.$http.get('/api/admin/system/config/backup');
+        if (response.success) {
+          // 创建下载链接
+          const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+            type: 'application/json'
+          });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+          link.download = `system_config_backup_${timestamp}.json`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+
+          this.$message.success('配置备份成功');
+        } else {
+          this.$message.error(response.message || '备份失败');
+        }
+      } catch (error) {
+        console.error('备份配置失败:', error);
+        this.$message.error('备份失败，请稍后重试');
+      }
+    },
+
+    // 显示恢复对话框
+    showRestoreDialog() {
+      this.restoreDialog.visible = true;
+      this.restoreDialog.fileList = [];
+      this.restoreDialog.backupData = null;
+    },
+
+    // 处理备份文件变化
+    handleBackupFileChange(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.version && data.configs && Array.isArray(data.configs)) {
+            this.restoreDialog.backupData = data;
+          } else {
+            this.$message.error('文件格式不正确，请上传有效的备份文件');
+            return;
+          }
+        } catch (error) {
+          this.$message.error('文件解析失败，请检查JSON格式');
+        }
+      };
+      reader.readAsText(file.raw);
+    },
+
+    // 确认恢复
+    async confirmRestore() {
+      if (!this.restoreDialog.backupData) {
+        this.$message.warning('请先选择要恢复的备份文件');
+        return;
+      }
+
+      this.$confirm('此操作将覆盖现有配置，是否继续？', '确认恢复', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        this.restoreDialog.loading = true;
+        try {
+          const response = await this.$http.post('/api/admin/system/config/restore', {
+            backup: this.restoreDialog.backupData
+          });
+
+          if (response.success) {
+            this.$message.success(response.message);
+            this.restoreDialog.visible = false;
+            await this.loadData();
+          } else {
+            this.$message.error(response.message || '恢复失败');
+          }
+        } catch (error) {
+          console.error('恢复配置失败:', error);
+          this.$message.error('恢复失败，请稍后重试');
+        } finally {
+          this.restoreDialog.loading = false;
+        }
+      });
     }
   }
 };
@@ -722,6 +1104,81 @@ export default {
   font-size: 12px;
   max-height: 200px;
   overflow-y: auto;
+}
+
+/* 导入导出相关样式 */
+.import-content .el-alert,
+.restore-content .el-alert {
+  margin-bottom: 20px;
+}
+
+.import-content .el-alert ul,
+.restore-content .el-alert ul {
+  margin: 10px 0 0 20px;
+}
+
+.import-content .el-alert li,
+.restore-content .el-alert li {
+  margin-bottom: 5px;
+}
+
+.import-content .upload-demo,
+.restore-content .upload-demo {
+  margin: 20px 0;
+}
+
+.import-content .preview-section,
+.restore-content .preview-section {
+  margin-top: 20px;
+}
+
+.import-content .preview-section h4,
+.restore-content .preview-section h4 {
+  margin-bottom: 10px;
+  color: #303133;
+}
+
+.import-content .preview-info,
+.restore-content .preview-info {
+  margin-top: 10px;
+  color: #909399;
+  font-size: 14px;
+}
+
+.import-content .backup-info,
+.restore-content .backup-info {
+  margin-top: 20px;
+}
+
+.import-content .backup-info h4,
+.restore-content .backup-info h4 {
+  margin-bottom: 10px;
+  color: #303133;
+}
+
+/* 高级功能按钮样式 */
+.header-actions .el-dropdown {
+  margin-right: 10px;
+}
+
+/* 表格样式增强 */
+.config-table .config-key {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #409eff;
+}
+
+.config-table .config-type-tag {
+  font-size: 12px;
+}
+
+.config-table .protected-config .config-key {
+  color: #f56c6c;
+}
+
+.config-table .protected-config .config-key::after {
+  content: ' 🔒';
+  font-size: 12px;
 }
 
 /* 响应式设计 */

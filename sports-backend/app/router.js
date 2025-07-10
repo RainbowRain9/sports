@@ -49,6 +49,12 @@ module.exports = app => {
   router.delete('/api/admin/system/config/:configKey', app.middleware.auth(), controller.systemConfig.deleteConfig);
   router.put('/api/admin/system/config/batch', app.middleware.auth(), controller.systemConfig.batchUpdateConfigs);
 
+  // 系统配置高级功能API
+  router.post('/api/admin/system/config/batch-import', app.middleware.auth(), controller.systemConfig.batchImportConfigs);
+  router.get('/api/admin/system/config/export', app.middleware.auth(), controller.systemConfig.exportConfigs);
+  router.get('/api/admin/system/config/backup', app.middleware.auth(), controller.systemConfig.backupConfigs);
+  router.post('/api/admin/system/config/restore', app.middleware.auth(), controller.systemConfig.restoreConfigs);
+
   // 系统通知API
   router.get('/api/notifications', app.middleware.auth(), controller.systemNotification.getNotifications);
   router.get('/api/notifications/unread-count', app.middleware.auth(), controller.systemNotification.getUnreadCount);

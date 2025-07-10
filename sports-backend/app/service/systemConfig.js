@@ -435,6 +435,163 @@ class SystemConfigService extends Service {
   }
   
   /**
+   * 批量导入配置
+   * @param {array} configs - 配置数组
+   * @param {number} userId - 操作用户ID
+   * @returns {object} 导入结果
+   */
+  async batchImportConfigs(configs, userId) {
+    const { app } = this;
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: []
+    };
+
+    try {
+      for (const config of configs) {
+        try {
+          // 验证必要字段
+          if (!config.config_key || !config.config_value || !config.config_type) {
+            results.failed++;
+            results.errors.push(`配置 ${config.config_key || '未知'}: 缺少必要字段`);
+            continue;
+          }
+
+          // 检查是否已存在
+          const existing = await app.mysql.get('system_config', { config_key: config.config_key });
+
+          if (existing) {
+            // 更新现有配置
+            await this.updateConfig(config.config_key, {
+              configValue: config.config_value,
+              configType: config.config_type,
+              description: config.description,
+              isPublic: config.is_public,
+              updatedBy: userId
+            });
+          } else {
+            // 创建新配置
+            await this.createConfig({
+              configKey: config.config_key,
+              configValue: config.config_value,
+              configType: config.config_type,
+              description: config.description,
+              isPublic: config.is_public,
+              updatedBy: userId
+            });
+          }
+
+          results.success++;
+
+        } catch (error) {
+          results.failed++;
+          results.errors.push(`配置 ${config.config_key}: ${error.message}`);
+        }
+      }
+
+      // 记录操作日志
+      await this.logOperation(userId, 'BATCH_IMPORT', 'system_config', null,
+        `批量导入配置: 成功${results.success}个，失败${results.failed}个`, 'SUCCESS');
+
+      return results;
+
+    } catch (error) {
+      this.logger.error('批量导入配置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 导出配置
+   * @param {object} filters - 过滤条件
+   * @returns {array} 配置数组
+   */
+  async exportConfigs(filters = {}) {
+    const { app } = this;
+
+    try {
+      let whereConditions = [];
+      let queryParams = [];
+
+      if (filters.configType) {
+        whereConditions.push('config_type = ?');
+        queryParams.push(filters.configType);
+      }
+
+      if (filters.isPublic !== undefined) {
+        whereConditions.push('is_public = ?');
+        queryParams.push(filters.isPublic);
+      }
+
+      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+      const sql = `
+        SELECT config_key, config_value, config_type, description, is_public
+        FROM system_config
+        ${whereClause}
+        ORDER BY config_key
+      `;
+
+      const result = await app.mysql.query(sql, queryParams);
+      return result;
+
+    } catch (error) {
+      this.logger.error('导出配置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 检查是否为保护配置
+   * @param {string} configKey - 配置键
+   * @returns {boolean} 是否为保护配置
+   */
+  isProtectedConfig(configKey) {
+    const protectedKeys = [
+      'system.name',
+      'system.version',
+      'database.host',
+      'database.port',
+      'database.username',
+      'database.password',
+      'jwt.secret',
+      'security.salt'
+    ];
+
+    return protectedKeys.includes(configKey) || configKey.startsWith('security.');
+  }
+
+  /**
+   * 记录操作日志
+   * @param {number} userId - 用户ID
+   * @param {string} operation - 操作类型
+   * @param {string} targetType - 目标类型
+   * @param {number} targetId - 目标ID
+   * @param {string} description - 描述
+   * @param {string} result - 结果
+   * @param {string} errorMsg - 错误信息
+   */
+  async logOperation(userId, operation, targetType, targetId, description, result, errorMsg = null) {
+    const { app } = this;
+
+    try {
+      await app.mysql.insert('operation_log', {
+        user_id: userId,
+        operation,
+        target_type: targetType,
+        target_id: targetId,
+        description,
+        result,
+        error_message: errorMsg,
+        created_at: new Date()
+      });
+    } catch (error) {
+      this.logger.error('记录操作日志失败:', error);
+    }
+  }
+
+  /**
    * 验证配置值
    * @param {any} value - 配置值
    * @param {string} type - 配置类型
@@ -469,7 +626,7 @@ class SystemConfigService extends Service {
         }
         break;
     }
-    
+
     return {
       valid: true
     };

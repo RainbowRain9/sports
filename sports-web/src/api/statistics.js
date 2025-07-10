@@ -1,4 +1,4 @@
-import request from './adapter'
+import { demo as request } from './adapter'
 
 /**
  * 数据统计中心API接口
@@ -8,40 +8,28 @@ export const statisticsApi = {
    * 获取系统概览统计数据
    */
   getOverview() {
-    return request({
-      url: '/api/statistics/overview',
-      method: 'get'
-    })
+    return request.get('/api/statistics/overview')
   },
 
   /**
    * 获取班级参与统计
    */
   getClassParticipation() {
-    return request({
-      url: '/api/statistics/class-participation',
-      method: 'get'
-    })
+    return request.get('/api/statistics/class-participation')
   },
 
   /**
    * 获取项目热度统计
    */
   getEventPopularity() {
-    return request({
-      url: '/api/statistics/event-popularity',
-      method: 'get'
-    })
+    return request.get('/api/statistics/event-popularity')
   },
 
   /**
    * 获取性别分布统计
    */
   getGenderDistribution() {
-    return request({
-      url: '/api/statistics/gender-distribution',
-      method: 'get'
-    })
+    return request.get('/api/statistics/gender-distribution')
   },
 
   /**
@@ -49,41 +37,28 @@ export const statisticsApi = {
    * @param {number} days - 统计天数
    */
   getRegistrationTrend(days = 7) {
-    return request({
-      url: '/api/statistics/registration-trend',
-      method: 'get',
-      params: { days }
-    })
+    return request.get('/api/statistics/registration-trend', { params: { days } })
   },
 
   /**
    * 获取成绩分析统计
    */
   getScoreAnalysis() {
-    return request({
-      url: '/api/statistics/score-analysis',
-      method: 'get'
-    })
+    return request.get('/api/statistics/score-analysis')
   },
 
   /**
    * 获取系统运行状态
    */
   getSystemStatus() {
-    return request({
-      url: '/api/statistics/system-status',
-      method: 'get'
-    })
+    return request.get('/api/statistics/system-status')
   },
 
   /**
    * 获取Dashboard综合数据
    */
   getDashboard() {
-    return request({
-      url: '/api/statistics/dashboard',
-      method: 'get'
-    })
+    return request.get('/api/statistics/dashboard')
   }
 }
 

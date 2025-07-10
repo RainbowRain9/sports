@@ -256,43 +256,112 @@ class StatisticsService extends Service {
    */
   async getSystemStatus() {
     const { app } = this;
-    
+
     try {
-      // 数据库连接状态
-      const dbStatus = await app.mysql.query('SELECT 1 as status');
-      
-      // 系统运行时间（模拟）
-      const uptime = process.uptime();
-      
-      // 内存使用情况
+      // 数据库连接状态测试
+      let dbStatus = 'disconnected';
+      let dbError = null;
+
+      try {
+        const testResult = await app.mysql.query('SELECT 1 as test_connection');
+        if (testResult && testResult.length > 0) {
+          dbStatus = 'connected';
+        }
+      } catch (dbErr) {
+        this.logger.error('数据库连接测试失败:', dbErr);
+        dbError = dbErr.message;
+      }
+
+      // 系统运行时间（秒）
+      const uptimeSeconds = Math.floor(process.uptime());
+
+      // 内存使用情况（字节转MB）
       const memoryUsage = process.memoryUsage();
-      
-      // 最近操作日志
-      const recentLogs = await app.mysql.query(`
-        SELECT operation_type, operation_description, created_at
-        FROM operation_log 
-        ORDER BY created_at DESC 
-        LIMIT 10
-      `);
-      
+      const memoryStats = {
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024), // MB
+        rss: Math.round(memoryUsage.rss / 1024 / 1024), // 常驻内存
+        external: Math.round(memoryUsage.external / 1024 / 1024) // 外部内存
+      };
+
+      // CPU使用情况
+      const cpuUsage = process.cpuUsage();
+
+      // 最近操作日志（如果表存在）
+      let recentLogs = [];
+      try {
+        recentLogs = await app.mysql.query(`
+          SELECT operation, target_type, target_id, result, created_at
+          FROM operation_log
+          ORDER BY created_at DESC
+          LIMIT 5
+        `);
+      } catch (logErr) {
+        // 如果operation_log表不存在，忽略错误
+        this.logger.warn('操作日志表不存在或查询失败:', logErr.message);
+      }
+
+      // 系统信息
+      const systemInfo = {
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        pid: process.pid,
+        startTime: new Date(Date.now() - uptimeSeconds * 1000).toISOString()
+      };
+
       return {
         database: {
-          status: dbStatus.length > 0 ? 'connected' : 'disconnected',
-          timestamp: new Date()
+          status: dbStatus,
+          timestamp: new Date().toISOString(),
+          error: dbError
         },
         server: {
-          uptime: Math.floor(uptime),
-          memory: {
-            used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-            total: Math.round(memoryUsage.heapTotal / 1024 / 1024)
-          }
+          uptime: uptimeSeconds,
+          memory: memoryStats,
+          cpu: {
+            user: Math.round(cpuUsage.user / 1000), // 微秒转毫秒
+            system: Math.round(cpuUsage.system / 1000)
+          },
+          system: systemInfo
         },
-        recentLogs
+        recentLogs: recentLogs || [],
+        timestamp: new Date().toISOString()
       };
-      
+
     } catch (error) {
       this.logger.error('获取系统状态失败:', error);
-      throw error;
+
+      // 即使出错也返回基本信息
+      return {
+        database: {
+          status: 'error',
+          timestamp: new Date().toISOString(),
+          error: error.message
+        },
+        server: {
+          uptime: Math.floor(process.uptime()),
+          memory: {
+            used: 0,
+            total: 0,
+            rss: 0,
+            external: 0
+          },
+          cpu: {
+            user: 0,
+            system: 0
+          },
+          system: {
+            nodeVersion: process.version,
+            platform: process.platform,
+            arch: process.arch,
+            pid: process.pid
+          }
+        },
+        recentLogs: [],
+        timestamp: new Date().toISOString(),
+        error: error.message
+      };
     }
   }
 

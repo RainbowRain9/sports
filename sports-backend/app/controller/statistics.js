@@ -17,7 +17,7 @@ class StatisticsController extends Controller {
     
     try {
       // 验证管理员权限
-      if (!ctx.user || (ctx.user.userType !== 'admin' && ctx.user.roleSubType !== '2')) {
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
         ctx.status = 403;
         ctx.body = {
           success: false,
@@ -56,7 +56,7 @@ class StatisticsController extends Controller {
     
     try {
       // 验证管理员权限
-      if (!ctx.user || (ctx.user.userType !== 'admin' && ctx.user.roleSubType !== '2')) {
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
         ctx.status = 403;
         ctx.body = {
           success: false,
@@ -95,7 +95,7 @@ class StatisticsController extends Controller {
     
     try {
       // 验证管理员权限
-      if (!ctx.user || (ctx.user.userType !== 'admin' && ctx.user.roleSubType !== '2')) {
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
         ctx.status = 403;
         ctx.body = {
           success: false,
@@ -134,7 +134,7 @@ class StatisticsController extends Controller {
     
     try {
       // 验证管理员权限
-      if (!ctx.user || (ctx.user.userType !== 'admin' && ctx.user.roleSubType !== '2')) {
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
         ctx.status = 403;
         ctx.body = {
           success: false,
@@ -173,7 +173,7 @@ class StatisticsController extends Controller {
     
     try {
       // 验证管理员权限
-      if (!ctx.user || (ctx.user.userType !== 'admin' && ctx.user.roleSubType !== '2')) {
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
         ctx.status = 403;
         ctx.body = {
           success: false,
@@ -213,7 +213,7 @@ class StatisticsController extends Controller {
     
     try {
       // 验证管理员权限
-      if (!ctx.user || (ctx.user.userType !== 'admin' && ctx.user.roleSubType !== '2')) {
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
         ctx.status = 403;
         ctx.body = {
           success: false,
@@ -249,10 +249,10 @@ class StatisticsController extends Controller {
    */
   async getSystemStatus() {
     const { ctx } = this;
-    
+
     try {
       // 验证管理员权限
-      if (!ctx.user || (ctx.user.userType !== 'admin' && ctx.user.roleSubType !== '2')) {
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
         ctx.status = 403;
         ctx.body = {
           success: false,
@@ -263,21 +263,42 @@ class StatisticsController extends Controller {
       }
 
       const systemStatus = await ctx.service.statistics.getSystemStatus();
-      
+
       ctx.status = 200;
       ctx.body = {
         success: true,
         code: 200,
-        data: systemStatus
+        data: systemStatus,
+        timestamp: new Date().toISOString()
       };
-      
+
     } catch (error) {
       ctx.logger.error('获取系统状态失败:', error);
-      ctx.status = 500;
+
+      // 即使出错也返回基本状态信息
+      const fallbackStatus = {
+        database: {
+          status: 'error',
+          timestamp: new Date().toISOString(),
+          error: error.message
+        },
+        server: {
+          uptime: Math.floor(process.uptime()),
+          memory: {
+            used: 0,
+            total: 0
+          }
+        },
+        recentLogs: [],
+        error: error.message
+      };
+
+      ctx.status = 200; // 返回200但包含错误信息
       ctx.body = {
-        success: false,
-        code: 500,
-        message: '服务器内部错误'
+        success: true,
+        code: 200,
+        data: fallbackStatus,
+        warning: '部分系统状态获取失败'
       };
     }
   }
@@ -291,7 +312,7 @@ class StatisticsController extends Controller {
     
     try {
       // 验证管理员权限
-      if (!ctx.user || (ctx.user.userType !== 'admin' && ctx.user.roleSubType !== '2')) {
+      if (!ctx.user || ctx.user.userType !== 'admin' || ctx.user.roleSubType !== '2') {
         ctx.status = 403;
         ctx.body = {
           success: false,

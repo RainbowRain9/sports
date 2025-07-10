@@ -108,23 +108,49 @@
         <div class="status-grid">
           <div class="status-item">
             <div class="status-label">数据库状态</div>
-            <div class="status-value" :class="systemStatus.database && systemStatus.database.status">
-              {{ systemStatus.database && systemStatus.database.status === 'connected' ? '正常' : '异常' }}
+            <div class="status-value" :class="getDatabaseStatusClass()">
+              <i :class="getDatabaseStatusIcon()"></i>
+              {{ getDatabaseStatusText() }}
             </div>
           </div>
           <div class="status-item">
             <div class="status-label">服务器运行时间</div>
-            <div class="status-value">{{ formatUptime(systemStatus.server && systemStatus.server.uptime) }}</div>
+            <div class="status-value">
+              <i class="el-icon-time"></i>
+              {{ formatUptime(getServerUptime()) }}
+            </div>
           </div>
           <div class="status-item">
             <div class="status-label">内存使用</div>
             <div class="status-value">
-              {{ systemStatus.server && systemStatus.server.memory ? systemStatus.server.memory.used : 0 }}MB / {{ systemStatus.server && systemStatus.server.memory ? systemStatus.server.memory.total : 0 }}MB
+              <i class="el-icon-monitor"></i>
+              {{ formatMemoryUsage() }}
+              <div class="memory-progress" v-if="getMemoryUsagePercent() > 0">
+                <div class="memory-bar" :style="{ width: getMemoryUsagePercent() + '%' }"></div>
+              </div>
+            </div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">系统信息</div>
+            <div class="status-value">
+              <i class="el-icon-info"></i>
+              {{ getSystemInfo() }}
             </div>
           </div>
           <div class="status-item">
             <div class="status-label">最后更新</div>
-            <div class="status-value">{{ lastUpdateTime }}</div>
+            <div class="status-value">
+              <i class="el-icon-refresh"></i>
+              {{ lastUpdateTime }}
+            </div>
+          </div>
+          <div class="status-item" v-if="systemStatus.recentLogs && systemStatus.recentLogs.length > 0">
+            <div class="status-label">最近操作</div>
+            <div class="status-value recent-logs">
+              <div v-for="(log, index) in systemStatus.recentLogs.slice(0, 3)" :key="index" class="log-item">
+                {{ log.operation }} {{ log.target_type ? '(' + log.target_type + ')' : '' }} - {{ log.result }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -260,9 +286,20 @@ export default {
         const response = await statisticsApi.getSystemStatus()
         if (response.success) {
           this.systemStatus = response.data
+          console.log('系统状态数据:', this.systemStatus) // 调试日志
+        } else {
+          console.error('系统状态API返回失败:', response)
+          this.$message.warning('系统状态获取失败')
         }
       } catch (error) {
         console.error('加载系统状态失败:', error)
+        this.$message.error('无法获取系统状态')
+        // 设置默认状态
+        this.systemStatus = {
+          database: { status: 'error', error: '连接失败' },
+          server: { uptime: 0, memory: { used: 0, total: 0 } },
+          recentLogs: []
+        }
       }
     },
     
@@ -445,11 +482,89 @@ export default {
     },
 
     formatUptime(seconds) {
-      if (!seconds) return '0秒'
-      const hours = Math.floor(seconds / 3600)
+      if (!seconds || seconds === 0) return '0秒'
+
+      const days = Math.floor(seconds / 86400)
+      const hours = Math.floor((seconds % 86400) / 3600)
       const minutes = Math.floor((seconds % 3600) / 60)
-      const secs = seconds % 60
-      return `${hours}小时${minutes}分${secs}秒`
+      const secs = Math.floor(seconds % 60)
+
+      if (days > 0) {
+        return `${days}天${hours}小时${minutes}分`
+      } else if (hours > 0) {
+        return `${hours}小时${minutes}分${secs}秒`
+      } else if (minutes > 0) {
+        return `${minutes}分${secs}秒`
+      } else {
+        return `${secs}秒`
+      }
+    },
+
+    // 获取数据库状态
+    getDatabaseStatusText() {
+      if (!this.systemStatus.database) return '未知'
+      const status = this.systemStatus.database.status
+      switch (status) {
+        case 'connected': return '正常连接'
+        case 'disconnected': return '连接断开'
+        case 'error': return '连接错误'
+        default: return '未知状态'
+      }
+    },
+
+    getDatabaseStatusClass() {
+      if (!this.systemStatus.database) return 'status-unknown'
+      const status = this.systemStatus.database.status
+      switch (status) {
+        case 'connected': return 'status-success'
+        case 'disconnected': return 'status-warning'
+        case 'error': return 'status-error'
+        default: return 'status-unknown'
+      }
+    },
+
+    getDatabaseStatusIcon() {
+      if (!this.systemStatus.database) return 'el-icon-question'
+      const status = this.systemStatus.database.status
+      switch (status) {
+        case 'connected': return 'el-icon-success'
+        case 'disconnected': return 'el-icon-warning'
+        case 'error': return 'el-icon-error'
+        default: return 'el-icon-question'
+      }
+    },
+
+    // 获取服务器运行时间
+    getServerUptime() {
+      return this.systemStatus.server && this.systemStatus.server.uptime ? this.systemStatus.server.uptime : 0
+    },
+
+    // 格式化内存使用
+    formatMemoryUsage() {
+      if (!this.systemStatus.server || !this.systemStatus.server.memory) {
+        return '0MB / 0MB'
+      }
+      const { used, total } = this.systemStatus.server.memory
+      return `${used || 0}MB / ${total || 0}MB`
+    },
+
+    // 获取内存使用百分比
+    getMemoryUsagePercent() {
+      if (!this.systemStatus.server || !this.systemStatus.server.memory) {
+        return 0
+      }
+      const { used, total } = this.systemStatus.server.memory
+      if (!total || total === 0) return 0
+      return Math.round((used / total) * 100)
+    },
+
+    // 获取系统信息
+    getSystemInfo() {
+      if (!this.systemStatus.server || !this.systemStatus.server.system) {
+        return 'Node.js'
+      }
+      const { nodeVersion, platform } = this.systemStatus.server.system
+      return `${nodeVersion || 'Node.js'} (${platform || 'unknown'})`
     },
     
     updateLastUpdateTime() {
@@ -458,11 +573,26 @@ export default {
     
     toggleAutoRefresh(enabled) {
       if (enabled) {
+        // 立即刷新一次
+        this.refreshSystemStatus()
+        // 设置定时器，每15秒刷新系统状态
         this.refreshTimer = setInterval(() => {
-          this.initPage()
-        }, 30000) // 30秒刷新一次
+          this.refreshSystemStatus()
+        }, 15000) // 15秒刷新一次，更频繁的状态更新
+        this.$message.success('自动刷新已开启')
       } else {
         this.clearAutoRefresh()
+        this.$message.info('自动刷新已关闭')
+      }
+    },
+
+    // 单独刷新系统状态
+    async refreshSystemStatus() {
+      try {
+        await this.loadSystemStatus()
+        this.updateLastUpdateTime()
+      } catch (error) {
+        console.error('刷新系统状态失败:', error)
       }
     },
     
@@ -642,29 +772,63 @@ export default {
 
 .status-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-top: 20px;
 }
 
 .status-item {
   text-align: center;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  backdrop-filter: blur(5px);
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
 
 .status-label {
   font-size: 14px;
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  font-weight: 500;
 }
 
 .status-value {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: bold;
   color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.status-value i {
+  font-size: 18px;
+}
+
+/* 状态颜色 */
+.status-success {
+  color: #67c23a;
+}
+
+.status-warning {
+  color: #e6a23c;
+}
+
+.status-error {
+  color: #f56c6c;
+}
+
+.status-unknown {
+  color: #909399;
 }
 
 .status-value.connected {
@@ -673,6 +837,45 @@ export default {
 
 .status-value.disconnected {
   color: #ff4d4f;
+}
+
+/* 内存使用进度条 */
+.memory-progress {
+  width: 100%;
+  height: 6px;
+  background-color: #e4e7ed;
+  border-radius: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.memory-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #67c23a 0%, #e6a23c 70%, #f56c6c 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* 最近操作日志 */
+.recent-logs {
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.log-item {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+  padding: 4px 8px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 4px;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 响应式设计 */
