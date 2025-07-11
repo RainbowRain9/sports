@@ -1,20 +1,45 @@
 <template>
-  <el-container>
-    <el-header class="header">
-      <span class="header-title">体育赛事管理系统</span>
-      <span class="header-name">{{ displayUserName }}</span>
-      <span class="header-logout"
-            @click="logout">退出</span>
+  <el-container class="admin-layout">
+    <el-header class="unified-header">
+      <div class="unified-header-left">
+        <span class="unified-header-title">体育赛事管理系统</span>
+        <span class="unified-header-subtitle">管理员专区</span>
+      </div>
+      <div class="unified-header-right">
+        <el-dropdown @command="handleCommand">
+          <span class="unified-user-dropdown">
+            <el-avatar :size="32" :src="avatarUrl">
+              {{ displayUserName.charAt(0) }}
+            </el-avatar>
+            <span class="unified-user-name">{{ displayUserName }}</span>
+            <i class="el-icon-arrow-down"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="profile">
+              <i class="el-icon-user"></i> 个人信息
+            </el-dropdown-item>
+            <el-dropdown-item command="password">
+              <i class="el-icon-key"></i> 修改密码
+            </el-dropdown-item>
+            <el-dropdown-item divided command="logout">
+              <i class="el-icon-switch-button"></i> 退出登录
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
     </el-header>
-    <el-container class="container">
-      <el-aside width="140px"
-                class="container-aside">
+    <el-container class="main-container">
+      <el-aside width="200px" class="unified-sidebar">
         <!-- 管理员/操作员菜单 -->
         <el-menu v-if="isAdminOrOperator"
                  :default-active="defaultActive"
                  @open="handleOpen"
                  router
-                 @close="handleClose">
+                 @close="handleClose"
+                 class="unified-sidebar-menu"
+                 background-color="#304156"
+                 text-color="#bfcbd9"
+                 active-text-color="#409eff">
           <!-- 数据统计 -->
           <el-menu-item index="/admin-dashboard">
             <i class="el-icon-data-analysis"></i>
@@ -137,8 +162,19 @@
           </el-menu-item>
         </el-menu>
       </el-aside>
-      <el-main>
-        <router-view></router-view>
+      <el-main class="unified-main-content">
+        <div class="unified-breadcrumb-container">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item :to="{ path: '/admin-dashboard' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item v-for="item in breadcrumbItems" :key="item.path" :to="item.path">
+              {{ item.name }}
+            </el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+
+        <div class="unified-content-wrapper">
+          <router-view></router-view>
+        </div>
       </el-main>
     </el-container>
   </el-container>
@@ -150,9 +186,12 @@ import { permissionMixin } from '@/utils/permission';
 
 export default {
   mixins: [permissionMixin],
-  data: () => ({
-
-  }),
+  data() {
+    return {
+      avatarUrl: null,
+      unreadCount: 0
+    };
+  },
   computed: {
     adminType() {
       return this.$store.getters['auth/roleSubType'];
@@ -177,8 +216,10 @@ export default {
     defaultActive() {
       if (this.isPlayer) {
         return '/player-home';
+      } else if (this.isJudge) {
+        return '/judge-home';
       }
-      return '/project';
+      return this.$route.path || '/admin-dashboard';
     },
 
     // 显示用户名
@@ -194,6 +235,26 @@ export default {
     // 获取未读通知数量
     unreadCount() {
       return this.$store.getters['notification/unreadCount'];
+    },
+
+    // 面包屑导航项
+    breadcrumbItems() {
+      const routeMap = {
+        '/admin-dashboard': { name: '数据统计', path: '/admin-dashboard' },
+        '/statistics-center': { name: '统计中心', path: '/statistics-center' },
+        '/registration-review': { name: '报名审核', path: '/registration-review' },
+        '/project': { name: '项目类型', path: '/project' },
+        '/competition': { name: '比赛项目', path: '/competition' },
+        '/plog': { name: '参赛记录', path: '/plog' },
+        '/player': { name: '运动员管理', path: '/player' },
+        '/judge-management': { name: '裁判员管理', path: '/judge-management' },
+        '/system-config': { name: '系统配置', path: '/system-config' },
+        '/notifications': { name: '通知中心', path: '/notifications' },
+        '/operation-logs': { name: '操作日志', path: '/operation-logs' }
+      };
+
+      const currentRoute = routeMap[this.$route.path];
+      return currentRoute ? [currentRoute] : [];
     }
   },
   async created() {
@@ -239,57 +300,64 @@ export default {
         console.error('退出失败:', error);
         this.$message.error('退出失败，请稍后重试');
       }
+    },
+
+    // 处理用户下拉菜单命令
+    handleCommand(command) {
+      switch (command) {
+        case 'profile':
+          this.$router.push('/admin/profile');
+          break;
+        case 'password':
+          this.$router.push('/admin/password');
+          break;
+        case 'logout':
+          this.logout();
+          break;
+      }
     }
   }
 };
 </script>
 
-<style lang="stylus" scoped>
-.header
-  height 60px !important
-  line-height 60px
-  font-size 22px
-  position relative
+<style scoped>
+.admin-layout {
+  height: 100vh;
+}
 
-.header-title
-  font-weight bold
-  color rgba(47, 84, 201, 1)
-
-.header-name
-  position absolute
-  right 130px
-
-.header-logout
-  position absolute
-  right 80px
-  font-size 16px
-  line-height 63px
-  cursor pointer
-
-  &:hover
-    color blue
-
-.container
-  background rgba(245, 247, 250, 0.54) !important
-  height 93.5vh
-
-.container-aside
-  height 100% !important
-  background #EBEEF5
-  font-size 18px
-  font-weight bold
-
-.el-menu
-  border 0px
-  background #EBEEF5
+.main-container {
+  height: calc(100vh - 60px);
+}
 
 /* 通知徽章样式 */
-.notification-badge
-  position absolute
-  top 8px
-  right 8px
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
 
-.notification-badge .el-badge__content
-  background-color #f56c6c
-  border 1px solid #fff
+.notification-badge .el-badge__content {
+  background-color: #f56c6c;
+  border: 1px solid #fff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .unified-sidebar {
+    width: 60px !important;
+  }
+
+  .unified-sidebar-menu .el-menu-item span,
+  .unified-sidebar-menu .el-submenu__title span {
+    display: none;
+  }
+
+  .unified-header-subtitle {
+    display: none;
+  }
+
+  .unified-user-name {
+    display: none;
+  }
+}
 </style>

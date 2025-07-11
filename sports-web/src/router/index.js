@@ -33,6 +33,7 @@ const router = new Router({
       path: '/home',
       name: 'home',
       component: () => import('../views/Index.vue'),
+      redirect: '/admin-dashboard',
       children: [
         {
           path: '/project',
@@ -250,13 +251,13 @@ router.beforeEach((to, from, next) => {
 
     // 根据用户类型跳转到对应主页
     if (userType === 'admin' || (userType === 'admin' && roleSubType === '1')) {
-      next('/project');
+      next('/admin-dashboard');
     } else if (userType === 'player') {
       next('/player-home');
     } else if (userType === 'judge') {
       next('/judge-home');
     } else {
-      next('/project');
+      next('/admin-dashboard');
     }
     return;
   }

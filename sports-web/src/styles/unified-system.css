@@ -1,0 +1,394 @@
+/* =============================================
+   体育赛事管理系统 - 统一样式系统
+   现代化设计语言，适用于所有角色系统
+   ============================================= */
+
+/* 1. 🎨 色彩系统 */
+:root {
+  /* 主色调 - 蓝紫渐变 */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-gradient-extended: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  
+  /* 辅助色 - 粉紫渐变 */
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  
+  /* 成功色 - 绿青渐变 */
+  --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  
+  /* 信息色 - 蓝青渐变 */
+  --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  
+  /* 警告色 - 橙黄渐变 */
+  --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  
+  /* 背景色 */
+  --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  --bg-light: #f8f9fa;
+  --bg-white: #ffffff;
+  
+  /* 文字色 */
+  --text-primary: #303133;
+  --text-regular: #606266;
+  --text-secondary: #909399;
+  --text-placeholder: #c0c4cc;
+  
+  /* 边框色 */
+  --border-light: #ebeef5;
+  --border-base: #dcdfe6;
+  --border-dark: #d3d4d6;
+  
+  /* 阴影 */
+  --shadow-light: 0 2px 8px rgba(0,0,0,0.05);
+  --shadow-base: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-dark: 0 6px 24px rgba(0,0,0,0.15);
+  --shadow-hover: 0 8px 32px rgba(0,0,0,0.2);
+  
+  /* 圆角 */
+  --radius-small: 6px;
+  --radius-base: 8px;
+  --radius-large: 12px;
+  --radius-xl: 16px;
+  --radius-xxl: 20px;
+  
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-xxl: 24px;
+  
+  /* 过渡动画 */
+  --transition-fast: all 0.2s ease;
+  --transition-base: all 0.3s ease;
+  --transition-slow: all 0.5s ease;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 2. 🏗️ 布局组件统一样式 */
+
+/* 头部样式 */
+.unified-header {
+  background: var(--primary-gradient-extended);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--spacing-xxl);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+  height: 60px;
+}
+
+.unified-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.unified-header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.unified-header-title {
+  font-size: 20px;
+  font-weight: bold;
+  background: linear-gradient(45deg, #fff, #f0f8ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.unified-header-subtitle {
+  font-size: 14px;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.2);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-large);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.unified-header-right {
+  display: flex;
+  align-items: center;
+}
+
+/* 用户下拉菜单 */
+.unified-user-dropdown {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 25px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: var(--transition-smooth);
+}
+
+.unified-user-dropdown:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.unified-user-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 侧边栏样式 */
+.unified-sidebar {
+  background: #304156;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.1);
+}
+
+.unified-sidebar-menu {
+  border: none;
+  height: 100%;
+}
+
+.unified-sidebar-menu .el-menu-item {
+  height: 50px;
+  line-height: 50px;
+  transition: var(--transition-base);
+}
+
+.unified-sidebar-menu .el-menu-item:hover {
+  background-color: rgba(64, 158, 255, 0.1) !important;
+  transform: translateX(2px);
+}
+
+.unified-sidebar-menu .el-submenu .el-menu-item {
+  height: 45px;
+  line-height: 45px;
+  padding-left: 60px !important;
+}
+
+/* 主内容区域 */
+.unified-main-content {
+  background: var(--bg-gradient);
+  padding: 0;
+  min-height: calc(100vh - 60px);
+}
+
+/* 面包屑导航 */
+.unified-breadcrumb-container {
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  padding: var(--spacing-lg) var(--spacing-xxl);
+  border-bottom: 1px solid rgba(230,230,230,0.5);
+  box-shadow: var(--shadow-light);
+}
+
+.unified-content-wrapper {
+  padding: var(--spacing-xxl);
+  height: calc(100% - 53px);
+  overflow-y: auto;
+}
+
+/* 3. 🎯 组件样式统一 */
+
+/* 卡片样式 */
+.unified-card {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-base);
+  transition: var(--transition-smooth);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+.unified-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* 统计卡片 */
+.unified-stat-card {
+  height: 120px;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-base);
+  transition: var(--transition-smooth);
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+}
+
+.unified-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.unified-stat-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: var(--radius-xxl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-xl);
+  font-size: 28px;
+  color: white;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transition: var(--transition-smooth);
+}
+
+.unified-stat-card:hover .unified-stat-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* 图标颜色变体 */
+.unified-stat-icon.primary {
+  background: var(--primary-gradient);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.unified-stat-icon.secondary {
+  background: var(--secondary-gradient);
+  box-shadow: 0 4px 16px rgba(240, 147, 251, 0.4);
+}
+
+.unified-stat-icon.success {
+  background: var(--success-gradient);
+  box-shadow: 0 4px 16px rgba(67, 233, 123, 0.4);
+}
+
+.unified-stat-icon.info {
+  background: var(--info-gradient);
+  box-shadow: 0 4px 16px rgba(79, 172, 254, 0.4);
+}
+
+.unified-stat-icon.warning {
+  background: var(--warning-gradient);
+  box-shadow: 0 4px 16px rgba(250, 112, 154, 0.4);
+}
+
+/* 4. 🎨 按钮系统 */
+.unified-button {
+  border-radius: var(--radius-base);
+  font-weight: 500;
+  transition: var(--transition-smooth);
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.unified-button:hover {
+  transform: translateY(-1px);
+}
+
+.unified-button.primary {
+  background: var(--primary-gradient);
+  color: white;
+}
+
+.unified-button.primary:hover {
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.unified-button.secondary {
+  background: var(--secondary-gradient);
+  color: white;
+}
+
+.unified-button.success {
+  background: var(--success-gradient);
+  color: white;
+}
+
+.unified-button.info {
+  background: var(--info-gradient);
+  color: white;
+}
+
+.unified-button.warning {
+  background: var(--warning-gradient);
+  color: white;
+}
+
+/* 5. 📱 响应式设计 */
+@media (max-width: 768px) {
+  .unified-header {
+    padding: 0 var(--spacing-lg);
+  }
+  
+  .unified-header-subtitle {
+    display: none;
+  }
+  
+  .unified-user-name {
+    display: none;
+  }
+  
+  .unified-content-wrapper {
+    padding: var(--spacing-lg);
+  }
+  
+  .unified-sidebar {
+    width: 60px !important;
+  }
+  
+  .unified-sidebar-menu .el-menu-item span,
+  .unified-sidebar-menu .el-submenu__title span {
+    display: none;
+  }
+}
+
+/* 6. 🎭 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.unified-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.unified-slide-in-right {
+  animation: slideInRight 0.4s ease-out;
+}
+
+/* 7. 🔧 工具类 */
+.unified-text-gradient {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.unified-glass-effect {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.unified-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}

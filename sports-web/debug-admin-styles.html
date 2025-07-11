@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员系统样式调试</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+        }
+        
+        .debug-container {
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .debug-section {
+            background: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .debug-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        
+        .check-item.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .check-item.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .check-icon {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+        }
+        
+        .preview-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preview-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .preview-title {
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #fff, #f0f8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1 style="text-align: center; color: #333; margin-bottom: 30px;">
+            🔍 管理员系统样式调试工具
+        </h1>
+        
+        <!-- 样式预览 -->
+        <div class="debug-section">
+            <div class="debug-title">📱 样式预览</div>
+            <div class="preview-header">
+                <div class="preview-title">体育赛事管理系统 - 管理员专区</div>
+            </div>
+            <p>如果上面的头部显示蓝紫渐变背景和渐变文字效果，说明CSS样式正常工作。</p>
+        </div>
+        
+        <!-- 检查清单 -->
+        <div class="debug-section">
+            <div class="debug-title">✅ 样式检查清单</div>
+            <div id="checkList">
+                <!-- 将通过JavaScript动态生成 -->
+            </div>
+            <button class="test-button" onclick="runStyleCheck()">🔍 运行样式检查</button>
+        </div>
+        
+        <!-- 浏览器信息 -->
+        <div class="debug-section">
+            <div class="debug-title">🌐 浏览器信息</div>
+            <div id="browserInfo">
+                <!-- 将通过JavaScript动态生成 -->
+            </div>
+        </div>
+        
+        <!-- 调试代码 -->
+        <div class="debug-section">
+            <div class="debug-title">🛠️ 调试代码</div>
+            <p>在浏览器开发者工具的控制台中执行以下代码：</p>
+            
+            <div class="code-block">
+// 检查CSS文件是否加载
+console.log('检查CSS文件加载状态...');
+const stylesheets = Array.from(document.styleSheets);
+const unifiedCSS = stylesheets.find(sheet => 
+    sheet.href && (sheet.href.includes('unified-system.css') || sheet.href.includes('admin-override.css'))
+);
+console.log('统一样式CSS:', unifiedCSS ? '✅ 已加载' : '❌ 未加载');
+
+// 检查Vue应用状态
+if (window.Vue) {
+    console.log('Vue版本:', Vue.version);
+    console.log('Vue应用:', '✅ 已加载');
+} else {
+    console.log('Vue应用:', '❌ 未加载');
+}
+
+// 检查Element UI
+if (window.ELEMENT) {
+    console.log('Element UI:', '✅ 已加载');
+} else {
+    console.log('Element UI:', '❌ 未加载');
+}
+            </div>
+            
+            <button class="test-button" onclick="copyDebugCode()">📋 复制调试代码</button>
+        </div>
+        
+        <!-- 解决方案 -->
+        <div class="debug-section">
+            <div class="debug-title">🔧 常见问题解决方案</div>
+            
+            <h4>问题1: 样式完全没有应用</h4>
+            <ul>
+                <li>清除浏览器缓存: <code>Ctrl + Shift + R</code></li>
+                <li>检查开发者工具Network标签页是否有CSS加载失败</li>
+                <li>重启开发服务器</li>
+            </ul>
+            
+            <h4>问题2: 部分样式没有应用</h4>
+            <ul>
+                <li>检查CSS优先级是否被覆盖</li>
+                <li>确认HTML元素使用了正确的类名</li>
+                <li>查看开发者工具Elements标签页的样式计算</li>
+            </ul>
+            
+            <h4>问题3: Vue组件没有渲染</h4>
+            <ul>
+                <li>检查路由配置是否正确</li>
+                <li>确认用户权限验证通过</li>
+                <li>查看浏览器控制台是否有JavaScript错误</li>
+            </ul>
+        </div>
+        
+        <!-- 测试步骤 -->
+        <div class="debug-section">
+            <div class="debug-title">🚀 测试步骤</div>
+            <ol>
+                <li>启动开发服务器: <code>NODE_OPTIONS="--openssl-legacy-provider" npm start</code></li>
+                <li>访问: <code>http://localhost:8080</code></li>
+                <li>使用管理员账号登录: <code>admin / 123</code></li>
+                <li>检查是否显示现代化样式效果</li>
+                <li>测试悬停动画和交互效果</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // 运行样式检查
+        function runStyleCheck() {
+            const checkList = document.getElementById('checkList');
+            const checks = [
+                {
+                    name: 'CSS变量支持',
+                    test: () => CSS.supports('color', 'var(--test-color)')
+                },
+                {
+                    name: '渐变背景支持',
+                    test: () => CSS.supports('background', 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
+                },
+                {
+                    name: 'backdrop-filter支持',
+                    test: () => CSS.supports('backdrop-filter', 'blur(10px)')
+                },
+                {
+                    name: 'transform支持',
+                    test: () => CSS.supports('transform', 'translateY(-2px)')
+                },
+                {
+                    name: 'transition支持',
+                    test: () => CSS.supports('transition', 'all 0.3s ease')
+                }
+            ];
+            
+            checkList.innerHTML = '';
+            checks.forEach(check => {
+                const result = check.test();
+                const item = document.createElement('div');
+                item.className = `check-item ${result ? 'success' : 'error'}`;
+                item.innerHTML = `
+                    <span class="check-icon">${result ? '✅' : '❌'}</span>
+                    <span>${check.name}: ${result ? '支持' : '不支持'}</span>
+                `;
+                checkList.appendChild(item);
+            });
+        }
+        
+        // 复制调试代码
+        function copyDebugCode() {
+            const code = `// 检查CSS文件是否加载
+console.log('检查CSS文件加载状态...');
+const stylesheets = Array.from(document.styleSheets);
+const unifiedCSS = stylesheets.find(sheet => 
+    sheet.href && (sheet.href.includes('unified-system.css') || sheet.href.includes('admin-override.css'))
+);
+console.log('统一样式CSS:', unifiedCSS ? '✅ 已加载' : '❌ 未加载');
+
+// 检查Vue应用状态
+if (window.Vue) {
+    console.log('Vue版本:', Vue.version);
+    console.log('Vue应用:', '✅ 已加载');
+} else {
+    console.log('Vue应用:', '❌ 未加载');
+}
+
+// 检查Element UI
+if (window.ELEMENT) {
+    console.log('Element UI:', '✅ 已加载');
+} else {
+    console.log('Element UI:', '❌ 未加载');
+}`;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                alert('调试代码已复制到剪贴板！');
+            });
+        }
+        
+        // 显示浏览器信息
+        function showBrowserInfo() {
+            const browserInfo = document.getElementById('browserInfo');
+            browserInfo.innerHTML = `
+                <p><strong>用户代理:</strong> ${navigator.userAgent}</p>
+                <p><strong>浏览器语言:</strong> ${navigator.language}</p>
+                <p><strong>屏幕分辨率:</strong> ${screen.width} x ${screen.height}</p>
+                <p><strong>视口大小:</strong> ${window.innerWidth} x ${window.innerHeight}</p>
+                <p><strong>设备像素比:</strong> ${window.devicePixelRatio}</p>
+            `;
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            showBrowserInfo();
+            runStyleCheck();
+        });
+    </script>
+</body>
+</html>

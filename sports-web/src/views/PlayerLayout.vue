@@ -203,13 +203,26 @@ export default {
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0 24px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .header-left {
@@ -221,14 +234,20 @@ export default {
 .header-title {
   font-size: 20px;
   font-weight: bold;
+  background: linear-gradient(45deg, #fff, #f0f8ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .header-subtitle {
   font-size: 14px;
-  opacity: 0.8;
+  opacity: 0.9;
   background: rgba(255, 255, 255, 0.2);
   padding: 4px 12px;
   border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header-right {
@@ -242,12 +261,17 @@ export default {
   gap: 8px;
   cursor: pointer;
   padding: 8px 12px;
-  border-radius: 6px;
-  transition: background-color 0.3s;
+  border-radius: 25px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .user-dropdown:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 
 .user-name {
@@ -272,6 +296,12 @@ export default {
 .sidebar-menu .el-menu-item {
   height: 50px;
   line-height: 50px;
+  transition: all 0.3s ease;
+}
+
+.sidebar-menu .el-menu-item:hover {
+  background-color: rgba(64, 158, 255, 0.1) !important;
+  transform: translateX(2px);
 }
 
 .sidebar-menu .el-submenu .el-menu-item {
@@ -281,19 +311,43 @@ export default {
 }
 
 .content {
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 0;
+  min-height: calc(100vh - 60px);
 }
 
 .breadcrumb-container {
-  background: white;
-  padding: 15px 20px;
-  border-bottom: 1px solid #e6e6e6;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(230,230,230,0.5);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .page-content {
-  padding: 0;
+  padding: 24px;
   min-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+/* 全局按钮样式优化 */
+.page-content .el-button {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-content .el-button:hover {
+  transform: translateY(-1px);
+}
+
+.page-content .el-button--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.page-content .el-button--primary:hover {
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
 }
 
 /* 响应式设计 */

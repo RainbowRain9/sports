@@ -13,48 +13,56 @@
     <div class="stats-cards">
       <el-row :gutter="20">
         <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon total-users">
-              <i class="el-icon-user"></i>
+          <el-card class="unified-stat-card">
+            <div class="stats-content">
+              <div class="unified-stat-icon primary">
+                <i class="el-icon-user"></i>
+              </div>
+              <div class="stats-info">
+                <h3>{{ stats.totalUsers || 0 }}</h3>
+                <p>总用户数</p>
+              </div>
             </div>
-            <div class="stat-content">
-              <h3>{{ stats.totalUsers || 0 }}</h3>
-              <p>总用户数</p>
-            </div>
-          </div>
+          </el-card>
         </el-col>
         <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon total-events">
-              <i class="el-icon-trophy"></i>
+          <el-card class="unified-stat-card">
+            <div class="stats-content">
+              <div class="unified-stat-icon secondary">
+                <i class="el-icon-trophy"></i>
+              </div>
+              <div class="stats-info">
+                <h3>{{ stats.totalEvents || 0 }}</h3>
+                <p>比赛项目</p>
+              </div>
             </div>
-            <div class="stat-content">
-              <h3>{{ stats.totalEvents || 0 }}</h3>
-              <p>比赛项目</p>
-            </div>
-          </div>
+          </el-card>
         </el-col>
         <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon total-registrations">
-              <i class="el-icon-tickets"></i>
+          <el-card class="unified-stat-card">
+            <div class="stats-content">
+              <div class="unified-stat-icon success">
+                <i class="el-icon-tickets"></i>
+              </div>
+              <div class="stats-info">
+                <h3>{{ stats.totalRegistrations || 0 }}</h3>
+                <p>总报名数</p>
+              </div>
             </div>
-            <div class="stat-content">
-              <h3>{{ stats.totalRegistrations || 0 }}</h3>
-              <p>总报名数</p>
-            </div>
-          </div>
+          </el-card>
         </el-col>
         <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon pending-reviews">
-              <i class="el-icon-warning"></i>
+          <el-card class="unified-stat-card">
+            <div class="stats-content">
+              <div class="unified-stat-icon warning">
+                <i class="el-icon-warning"></i>
+              </div>
+              <div class="stats-info">
+                <h3>{{ stats.pendingReviews || 0 }}</h3>
+                <p>待审核</p>
+              </div>
             </div>
-            <div class="stat-content">
-              <h3>{{ stats.pendingReviews || 0 }}</h3>
-              <p>待审核</p>
-            </div>
-          </div>
+          </el-card>
         </el-col>
       </el-row>
     </div>
