@@ -1,8 +1,8 @@
-# 体育赛事管理系统 - 统一样式系统指南
+# 嘉园运动会系统 - 统一样式系统指南
 
 ## 🎨 概述
 
-本指南详细说明了体育赛事管理系统的统一样式系统，确保管理员、运动员、裁判员三个系统界面的一致性和现代化体验。
+本指南详细说明了嘉园运动会系统的统一样式系统，确保管理员、运动员、裁判员三个系统界面的一致性和现代化体验。
 
 ## ✨ 设计原则
 
@@ -53,7 +53,7 @@
 ```html
 <el-header class="unified-header">
   <div class="unified-header-left">
-    <span class="unified-header-title">体育赛事管理系统</span>
+    <span class="unified-header-title">嘉园运动会系统</span>
     <span class="unified-header-subtitle">角色专区</span>
   </div>
   <div class="unified-header-right">

@@ -2,7 +2,7 @@
   <el-container class="admin-layout">
     <el-header class="unified-header">
       <div class="unified-header-left">
-        <span class="unified-header-title">体育赛事管理系统</span>
+        <span class="unified-header-title">嘉园运动会系统</span>
         <span class="unified-header-subtitle">管理员专区</span>
       </div>
       <div class="unified-header-right">

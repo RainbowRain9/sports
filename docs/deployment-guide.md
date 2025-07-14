@@ -171,7 +171,7 @@ vim .env
 ```bash
 # .env
 VUE_APP_API_BASE_URL=http://localhost:7001
-VUE_APP_TITLE=体育赛事管理系统
+VUE_APP_TITLE=嘉园运动会系统
 ```
 
 ### 3. 开发环境启动

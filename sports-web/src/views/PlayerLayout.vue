@@ -2,7 +2,7 @@
   <el-container class="player-layout">
     <el-header class="header">
       <div class="header-left">
-        <span class="header-title">体育赛事管理系统</span>
+        <span class="header-title">嘉园运动会系统</span>
         <span class="header-subtitle">运动员专区</span>
       </div>
       <div class="header-right">

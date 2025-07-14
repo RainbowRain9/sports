@@ -1,5 +1,5 @@
 -- =============================================
--- 体育赛事管理系统完整功能扩展脚本
+-- 嘉园运动会系统完整功能扩展脚本
 -- 补充缺失的系统管理和优化功能
 -- =============================================
 
@@ -180,7 +180,7 @@ CREATE INDEX IF NOT EXISTS `idx_player_email` ON `player`(`player_email`);
 
 -- 9. 插入默认系统配置
 INSERT IGNORE INTO `system_config` (`config_key`, `config_value`, `config_type`, `description`, `is_public`) VALUES
-('system.name', '体育赛事管理系统', 'string', '系统名称', 1),
+('system.name', '嘉园运动会系统', 'string', '系统名称', 1),
 ('system.version', 'v1.3.0', 'string', '系统版本', 1),
 ('registration.max_per_player', '3', 'number', '每人最多报名项目数', 1),
 ('registration.max_per_class_per_event', '5', 'number', '每班每项目最多报名人数', 1),

@@ -1,6 +1,6 @@
-# 体育赛事管理系统 - 嘉庚大二实践周作业
+# 嘉园运动会系统 - 嘉庚大二实践周作业
 
-一个功能完整的体育赛事管理系统，支持多角色登录和运动员自助服务。
+一个功能完整的嘉园运动会系统，支持多角色登录和运动员自助服务。
 
 ## 🎯 系统特色
 
@@ -15,7 +15,7 @@
 ## 📚 相关链接
 - [项目在线链接](http://39.105.108.226:7001)
 - [项目仓库地址](https://github.com/RainbowRain9/sports)
-- [体育赛事管理系统的设计与实现设计文档](https://cnphkngr8e.feishu.cn/file/boxcnb2B5V2LAJjrX6P77cPuItg)
+- [嘉园运动会系统的设计与实现设计文档](https://cnphkngr8e.feishu.cn/file/boxcnb2B5V2LAJjrX6P77cPuItg)
 - [接口文档链接](http://note.youdao.com/noteshare?id=f691c1b7400922f6abb96fefc81aad54)
 - [项目数据库sql文件](./sports-backend/sports.sql)
 

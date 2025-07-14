@@ -36,7 +36,7 @@ INSERT INTO system_notification (user_id, user_type, title, content, type, statu
 
 -- 创建一些历史通知数据
 INSERT INTO system_notification (user_id, user_type, title, content, type, status, priority, created_at) VALUES
-(17, 'player', '欢迎使用系统', '欢迎使用体育赛事管理系统，祝您使用愉快！', 'system_notice', 1, 1, NOW() - INTERVAL 7 DAY),
+(17, 'player', '欢迎使用系统', '欢迎使用嘉园运动会系统，祝您使用愉快！', 'system_notice', 1, 1, NOW() - INTERVAL 7 DAY),
 (18, 'player', '账号激活成功', '您的账号已成功激活，可以正常使用系统功能。', 'system_notice', 1, 1, NOW() - INTERVAL 6 DAY),
 (19, 'player', '密码修改成功', '您的登录密码已成功修改，请妥善保管。', 'system_notice', 1, 1, NOW() - INTERVAL 5 DAY),
 (1, 'judge', '系统升级完成', '系统升级已完成，新增了多项实用功能。', 'system_notice', 1, 1, NOW() - INTERVAL 4 DAY),

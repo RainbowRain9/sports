@@ -2,7 +2,7 @@
   <div class="multi-login-wrapper">
     <div class="login-container">
       <div class="login-header">
-        <h1 class="system-title">体育赛事管理系统</h1>
+        <h1 class="system-title">嘉园运动会系统</h1>
         <p class="system-subtitle">嘉庚大二实践周作业</p>
       </div>
       
@@ -22,7 +22,7 @@
       </div>
       
       <div class="login-footer">
-        <p>&copy; 2025 嘉庚学院体育赛事管理系统</p>
+        <p>&copy; 2025 嘉庚学院嘉园运动会系统</p>
       </div>
     </div>
   </div>

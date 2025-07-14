@@ -186,12 +186,12 @@ class NotificationService extends Service {
     
     try {
       const actionText = this._getActionText(action);
-      const subject = `【体育赛事管理系统】报名审核${actionText}通知`;
+      const subject = `【嘉园运动会系统】报名审核${actionText}通知`;
       
       let htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
-            <h2 style="margin: 0;">体育赛事管理系统</h2>
+            <h2 style="margin: 0;">嘉园运动会系统</h2>
             <p style="margin: 10px 0 0 0;">报名审核${actionText}通知</p>
           </div>
           
